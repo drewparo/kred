@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 from itertools import repeat
 from collections import OrderedDict
-from sentence_transformers import SentenceTransformer
+#from sentence_transformers import SentenceTransformer
 import requests
 import math
 import zipfile
