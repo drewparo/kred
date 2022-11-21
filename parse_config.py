@@ -70,7 +70,7 @@ class ConfigParser:
             cfg_fname = Path(args.config)
 
         #config = read_json(cfg_fname)
-        fp_yaml =  open('./config.yaml')
+        fp_yaml = open('./KRED_LAJ/config.yaml')
         config = yaml.load(fp_yaml)
         if args.config and resume:
             # update new config for fine-tuning
