@@ -1,0 +1,2 @@
+2022-11-25 16:59:56,949 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: distilbert-base-nli-stsb-mean-tokens
+2022-11-25 17:00:41,184 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device: cpu
