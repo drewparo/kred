@@ -377,16 +377,16 @@ def build_news_features_mind(config):
         if len(news_entity_feature_list) > config['model']['news_entity_num']:
             news_entity_feature_list = news_entity_feature_list[:config['model']['news_entity_num']]
         else:
-            for i in range(len(news_entity_feature_list), config['model']['news_entity_num']):
+            for i in (i for i in range(len(news_entity_feature_list), config['model']['news_entity_num'])):
                 news_entity_feature_list.append([0, 0, 0, 0])
         news_feature_list_ins = [[],[],[],[],[]]
-        for i in range(len(news_entity_feature_list)):
+        for i in (i for i in range(len(news_entity_feature_list))): 
             for j in range(4):
                 news_feature_list_ins[j].append(news_entity_feature_list[i][j])
         news_feature_list_ins[4] = sentence_embedding
         news_features[news] = news_feature_list_ins
     news_features["N0"] = [[],[],[],[],[]]
-    for i in range(config['model']['news_entity_num']):
+    for i in (i for i in range(config['model']['news_entity_num'])):
         for j in range(4):
             news_features["N0"][j].append(0)
     news_features["N0"][4] = np.zeros(config['model']['document_embedding_dim'])
@@ -395,38 +395,38 @@ def build_news_features_mind(config):
 def construct_adj_mind(config):#graph is triple
     print('constructing adjacency matrix ...')
     graph_file_fp = open(config['data']['knowledge_graph'], 'r', encoding='utf-8')
-    graph = []
+    kg = {}
     for line in graph_file_fp:
         linesplit = line.split('\n')[0].split('\t')
-        graph.append([int(linesplit[0])+1, int(linesplit[2])+1, int(linesplit[1])+1])
-    kg = {}
-    for triple in graph:
-        head = triple[0]
-        relation = triple[1]
-        tail = triple[2]
-        # treat the KG as an undirected graph
+        head = int(linesplit[0])+1
+        relation = int(linesplit[2])+1
+        tail = int(linesplit[1])+1
         if head not in kg:
             kg[head] = []
         kg[head].append((tail, relation))
         if tail not in kg:
             kg[tail] = []
         kg[tail].append((head, relation))
+        del linesplit, head, relation, tail 
 
     fp_entity2id = open(config['data']['entity_index'], 'r', encoding='utf-8')
     entity_num = int(fp_entity2id.readline().split('\n')[0])+1
+    print(entity_num)
     entity_adj = []
     relation_adj = []
-    for i in range(entity_num+1):
+    for i in (i for i in range(entity_num+1)):
         entity_adj.append([])
         relation_adj.append([])
-    for i in range(config['model']['entity_neighbor_num']):
+    for i in (i for i in range(config['model']['entity_neighbor_num'])):
         entity_adj[0].append(0)
         relation_adj[0].append(0)
     for key in kg.keys():
-        for index in range(config['model']['entity_neighbor_num']):
+        for index in (i for i in range(config['model']['entity_neighbor_num'])):
             i = random.randint(0,len(kg[key])-1)
             entity_adj[int(key)].append(int(kg[key][i][0]))
             relation_adj[int(key)].append(int(kg[key][i][1]))
+
+    del kg
 
     return entity_adj, relation_adj
 
@@ -612,7 +612,11 @@ def load_data_mind(config):
 
     entity_adj, relation_adj = construct_adj_mind(config)
 
+    print('Primo Step')
+
     news_feature, max_entity_freq, max_entity_pos, max_entity_type = build_news_features_mind(config)
+
+    print('Secondo Step')
 
     user_history = build_user_history(config)
 
