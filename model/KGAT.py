@@ -20,6 +20,7 @@ class KGAT(BaseModel):
         self.convolve_layer = nn.Linear(2*self.config['model']['entity_embedding_dim'],self.config['model']['entity_embedding_dim'])
 
     def get_neighbors(self, entities):
+        print(0)
         neighbor_entities = []
         neighbor_relations = []
         for entity_batch in entities:
