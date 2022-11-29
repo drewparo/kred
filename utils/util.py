@@ -13,7 +13,7 @@ from sentence_transformers import SentenceTransformer
 import requests
 import math
 import zipfile
-#from logger.logger import *
+# from logger.logger import *
 from tqdm import tqdm
 from scipy import sparse
 from IPython.display import clear_output
@@ -24,20 +24,24 @@ def ensure_dir(dirname):
     if not dirname.is_dir():
         dirname.mkdir(parents=True, exist_ok=False)
 
+
 def read_json(fname):
     fname = Path(fname)
     with fname.open('rt') as handle:
         return json.load(handle, object_hook=OrderedDict)
+
 
 def write_json(content, fname):
     fname = Path(fname)
     with fname.open('wt') as handle:
         json.dump(content, handle, indent=4, sort_keys=False)
 
+
 def inf_loop(data_loader):
     ''' wrapper function for endless data loader. '''
     for loader in repeat(data_loader):
         yield from loader
+
 
 def prepare_device(n_gpu_use):
     """
@@ -56,7 +60,8 @@ def prepare_device(n_gpu_use):
     list_ids = list(range(n_gpu_use))
     return device, list_ids
 
-def construct_adj(graph_file, entity2id_file, args):#graph is triple
+
+def construct_adj(graph_file, entity2id_file, args):  # graph is triple
     print('constructing adjacency matrix ...')
     graph_file_fp = open(graph_file, 'r', encoding='utf-8')
     graph = []
@@ -87,11 +92,12 @@ def construct_adj(graph_file, entity2id_file, args):#graph is triple
         relation_adj.append([])
     for key in kg.keys():
         for index in range(args.entity_neighbor_num):
-            i = random.randint(0,len(kg[key])-1)
+            i = random.randint(0, len(kg[key]) - 1)
             entity_adj[int(key)].append(int(kg[key][i][0]))
             relation_adj[int(key)].append(int(kg[key][i][1]))
 
     return entity_adj, relation_adj
+
 
 def construct_embedding(entity_embedding_file, relation_embedding_file):
     print('constructing embedding ...')
@@ -109,8 +115,10 @@ def construct_embedding(entity_embedding_file, relation_embedding_file):
         relation_embedding.append(linesplit)
     return torch.FloatTensor(entity_embedding), torch.FloatTensor(relation_embedding)
 
+
 def my_collate_fn(batch):
     return batch
+
 
 def construct_entity_dict(entity_file):
     fp_entity2id = open(entity_file, 'r', encoding='utf-8')
@@ -122,6 +130,7 @@ def construct_entity_dict(entity_file):
         entity_dict[entity] = entityid
     return entity_dict
 
+
 def real_batch(batch):
     data = {}
     data['item1'] = []
@@ -132,6 +141,7 @@ def real_batch(batch):
         data['item2'].append(item['item2'])
         data['label'].append(item['label'])
     return data
+
 
 def maybe_download(url, filename=None, work_directory=".", expected_bytes=None):
     """Download a file if it is not already downloaded.
@@ -172,6 +182,7 @@ def maybe_download(url, filename=None, work_directory=".", expected_bytes=None):
 
     return filepath
 
+
 def unzip_file(zip_src, dst_dir, clean_zip_file=True):
     """Unzip a file
 
@@ -185,6 +196,7 @@ def unzip_file(zip_src, dst_dir, clean_zip_file=True):
         fz.extract(file, dst_dir)
     if clean_zip_file:
         os.remove(zip_src)
+
 
 def get_mind_data_set(type):
     """ Get MIND dataset address
@@ -221,6 +233,7 @@ def get_mind_data_set(type):
             "MINDdemo_utils.zip",
         )
 
+
 def download_deeprec_resources(azure_container_url, data_path, remote_resource_name):
     """Download resources.
 
@@ -236,6 +249,7 @@ def download_deeprec_resources(azure_container_url, data_path, remote_resource_n
     zip_ref.extractall(data_path)
     zip_ref.close()
     os.remove(os.path.join(data_path, remote_resource_name))
+
 
 def get_user2item_data(config):
     negative_num = config['trainer']['train_neg_num']
@@ -256,7 +270,7 @@ def get_user2item_data(config):
             else:
                 negative_list.append(newsid)
         for pos_news in positive_list:
-            user_id.append(userid+ "_train")
+            user_id.append(userid + "_train")
             if len(negative_list) >= negative_num:
                 neg_news = random.sample(negative_list, negative_num)
             else:
@@ -287,7 +301,7 @@ def get_user2item_data(config):
         for news in behavior:
             newsid, news_label = news.split('-')
             session_id.append(index)
-            user_id.append(userid+ "_dev")
+            user_id.append(userid + "_dev")
             if news_label == "1":
                 news_id.append(newsid)
                 label.append(1.0)
@@ -302,16 +316,17 @@ def get_user2item_data(config):
 
     return train_data, dev_data
 
+
 def build_user_history(config):
     user_history_dict = {}
     fp_train_behavior = open(config['data']['train_behavior'], 'r', encoding='utf-8')
     for line in fp_train_behavior:
         index, user_id, imp_time, history, behavior = line.strip().split('\t')
         if len(history.split(' ')) >= config['model']['user_his_num']:
-            user_history_dict[user_id+"_train"] = history.split(' ')[:config['model']['user_his_num']]
+            user_history_dict[user_id + "_train"] = history.split(' ')[:config['model']['user_his_num']]
         else:
             user_history_dict[user_id + "_train"] = history.split(' ')
-            for i in range(config['model']['user_his_num']-len(history.split(' '))):
+            for i in range(config['model']['user_his_num'] - len(history.split(' '))):
                 user_history_dict[user_id + "_train"].append("N0")
             if user_history_dict[user_id + "_train"][0] == '':
                 user_history_dict[user_id + "_train"][0] = 'N0'
@@ -320,14 +335,15 @@ def build_user_history(config):
     for line in fp_dev_behavior:
         index, user_id, imp_time, history, behavior = line.strip().split('\t')
         if len(history.split(' ')) >= config['model']['user_his_num']:
-            user_history_dict[user_id+"_dev"] = history.split(' ')[:config['model']['user_his_num']]
+            user_history_dict[user_id + "_dev"] = history.split(' ')[:config['model']['user_his_num']]
         else:
             user_history_dict[user_id + "_dev"] = history.split(' ')
-            for i in range(config['model']['user_his_num']-len(history.split(' '))):
+            for i in range(config['model']['user_his_num'] - len(history.split(' '))):
                 user_history_dict[user_id + "_dev"].append("N0")
             if user_history_dict[user_id + "_dev"][0] == '':
                 user_history_dict[user_id + "_dev"][0] = 'N0'
     return user_history_dict
+
 
 def build_news_features_mind(config):
     entity2id_dict = {}
@@ -343,21 +359,25 @@ def build_news_features_mind(config):
     fp_train_news = open(config['data']['train_news'], 'r', encoding='utf-8')
     for line in fp_train_news:
         newsid, vert, subvert, title, abstract, url, entity_info_title, entity_info_abstract = line.strip().split('\t')
-        news_feature_dict[newsid] = (title+" "+abstract, entity_info_title, entity_info_abstract)
+        news_feature_dict[newsid] = (title + " " + abstract, entity_info_title, entity_info_abstract)
     # entityid, entity_freq, entity_position, entity_type
     fp_dev_news = open(config['data']['valid_news'], 'r', encoding='utf-8')
     for line in fp_dev_news:
         newsid, vert, subvert, title, abstract, url, entity_info_title, entity_info_abstract = line.strip().split('\t')
         news_feature_dict[newsid] = (title + " " + abstract, entity_info_title, entity_info_abstract)
 
-    #deal with doc feature
+    # deal with doc feature
     entity_type_dict = {}
     entity_type_index = 1
     model = SentenceTransformer('distilbert-base-nli-stsb-mean-tokens')
-    train_size=0.40
-    clear_output()
-    for news in news_feature_dict[:int(len(news_feature_dict)*train_size)]:
+    train_size = int(0.40 * len(news_feature_dict))
+    news_counter = 0
+    for news in news_feature_dict:
+        news_counter += 1
+        if news_counter > train_size:
+            break
         sentence_embedding = model.encode(news_feature_dict[news][0])
+        clear_output()
         news_entity_feature_list = []
         title_entity_json = json.loads(news_feature_dict[news][1])
         abstract_entity_json = json.loads(news_feature_dict[news][2])
@@ -366,10 +386,13 @@ def build_news_features_mind(config):
             if item['Type'] not in entity_type_dict:
                 entity_type_dict[item['Type']] = entity_type_index
                 entity_type_index = entity_type_index + 1
-            news_entity_feature[item['WikidataId']] = (len(item['OccurrenceOffsets']), 1, entity_type_dict[item['Type']]) #entity_freq, entity_position, entity_type
+            news_entity_feature[item['WikidataId']] = (len(item['OccurrenceOffsets']), 1, entity_type_dict[
+                item['Type']])  # entity_freq, entity_position, entity_type
         for item in abstract_entity_json:
             if item['WikidataId'] in news_entity_feature:
-                news_entity_feature[item['WikidataId']] = (news_entity_feature[item['WikidataId']][0] + len(item['OccurrenceOffsets']), 1, entity_type_dict[item['Type']])
+                news_entity_feature[item['WikidataId']] = (
+                news_entity_feature[item['WikidataId']][0] + len(item['OccurrenceOffsets']), 1,
+                entity_type_dict[item['Type']])
             else:
                 if item['Type'] not in entity_type_dict:
                     entity_type_dict[item['Type']] = entity_type_index
@@ -378,29 +401,31 @@ def build_news_features_mind(config):
                     item['Type']])  # entity_freq, entity_position, entity_type
         for entity in news_entity_feature:
             if entity in entity2id_dict:
-                news_entity_feature_list.append([entity2id_dict[entity], news_entity_feature[entity][0], news_entity_feature[entity][1], news_entity_feature[entity][2]])
+                news_entity_feature_list.append(
+                    [entity2id_dict[entity], news_entity_feature[entity][0], news_entity_feature[entity][1],
+                     news_entity_feature[entity][2]])
         news_entity_feature_list.append([0, 0, 0, 0])
         if len(news_entity_feature_list) > config['model']['news_entity_num']:
             news_entity_feature_list = news_entity_feature_list[:config['model']['news_entity_num']]
         else:
             for i in (i for i in range(len(news_entity_feature_list), config['model']['news_entity_num'])):
                 news_entity_feature_list.append([0, 0, 0, 0])
-        news_feature_list_ins = [[],[],[],[],[]]
-        for i in (i for i in range(len(news_entity_feature_list))): 
+        news_feature_list_ins = [[], [], [], [], []]
+        for i in (i for i in range(len(news_entity_feature_list))):
             for j in range(4):
                 news_feature_list_ins[j].append(news_entity_feature_list[i][j])
         news_feature_list_ins[4] = sentence_embedding
         news_features[news] = news_feature_list_ins
-    news_features["N0"] = [[],[],[],[],[]]
+    news_features["N0"] = [[], [], [], [], []]
     for i in (i for i in range(config['model']['news_entity_num'])):
         for j in range(4):
             news_features["N0"][j].append(0)
     news_features["N0"][4] = np.zeros(config['model']['document_embedding_dim'])
     return news_features, 100, 10, 100
 
-def construct_adj_mind(config):#graph is triple
-    if os.path.exists(config['data']['sparse_adj_entity']) and os.path.exists(config['data']['sparse_adj_relation']):
 
+def construct_adj_mind(config):  # graph is triple
+    if os.path.exists(config['data']['sparse_adj_entity']) and os.path.exists(config['data']['sparse_adj_relation']):
         sparse_adj_entity = np.load(config['data']['sparse_adj_entity'])
         sparse_adj_relation = np.load(config['data']['sparse_adj_relation'])
         return sparse_adj_entity, sparse_adj_relation
@@ -409,23 +434,23 @@ def construct_adj_mind(config):#graph is triple
     kg = {}
     for line in graph_file_fp:
         linesplit = line.split('\n')[0].split('\t')
-        head = int(linesplit[0])+1
-        relation = int(linesplit[2])+1
-        tail = int(linesplit[1])+1
+        head = int(linesplit[0]) + 1
+        relation = int(linesplit[2]) + 1
+        tail = int(linesplit[1]) + 1
         if head not in kg:
             kg[head] = []
         kg[head].append((tail, relation))
         if tail not in kg:
             kg[tail] = []
         kg[tail].append((head, relation))
-        del linesplit, head, relation, tail 
+        del linesplit, head, relation, tail
 
     fp_entity2id = open(config['data']['entity_index'], 'r', encoding='utf-8')
-    entity_num = int(fp_entity2id.readline().split('\n')[0])+1
+    entity_num = int(fp_entity2id.readline().split('\n')[0]) + 1
     print(entity_num)
     entity_adj = []
     relation_adj = []
-    for i in (i for i in range(entity_num+1)):
+    for i in (i for i in range(entity_num + 1)):
         entity_adj.append([])
         relation_adj.append([])
     for i in (i for i in range(config['model']['entity_neighbor_num'])):
@@ -433,13 +458,14 @@ def construct_adj_mind(config):#graph is triple
         relation_adj[0].append(0)
     for key in kg.keys():
         for index in (i for i in range(config['model']['entity_neighbor_num'])):
-            i = random.randint(0,len(kg[key])-1)
+            i = random.randint(0, len(kg[key]) - 1)
             entity_adj[int(key)].append(int(kg[key][i][0]))
             relation_adj[int(key)].append(int(kg[key][i][1]))
 
     del kg
 
     return entity_adj, relation_adj
+
 
 def construct_embedding_mind(config):
     print('constructing embedding ...')
@@ -459,6 +485,7 @@ def construct_embedding_mind(config):
         linesplit = [float(i) for i in linesplit]
         relation_embedding.append(linesplit)
     return torch.FloatTensor(entity_embedding), torch.FloatTensor(relation_embedding)
+
 
 def build_vert_data(config):
     random.seed(2020)
@@ -482,7 +509,7 @@ def build_vert_data(config):
         all_news_data.append((newsid, vert_label_dict[vert]))
     print(vert_label_dict)
     for i in range(len(all_news_data)):
-        if random.random()<0.8:
+        if random.random() < 0.8:
             item1_list_train.append("U0")
             item2_list_train.append(all_news_data[i][0])
             label_list_train.append(all_news_data[i][1])
@@ -499,6 +526,7 @@ def build_vert_data(config):
 
     return vert_train, vert_dev
 
+
 def build_pop_data(config):
     fp_train = open(config['data']['train_behavior'], 'r', encoding='utf-8')
     news_imp_dict = {}
@@ -511,16 +539,17 @@ def build_pop_data(config):
             newsid, news_label = news.split('-')
             if news_label == "1":
                 if newsid not in news_imp_dict:
-                    news_imp_dict[newsid] = [1,1]
+                    news_imp_dict[newsid] = [1, 1]
                 else:
                     news_imp_dict[newsid][0] = news_imp_dict[newsid][0] + 1
                     news_imp_dict[newsid][1] = news_imp_dict[newsid][1] + 1
             else:
                 if newsid not in news_imp_dict:
-                    news_imp_dict[newsid] = [0,1]
+                    news_imp_dict[newsid] = [0, 1]
                 else:
                     news_imp_dict[newsid][1] = news_imp_dict[newsid][1] + 1
     return pop_train, pop_test
+
 
 def build_item2item_data(config):
     fp_train = open(config['data']['train_behavior'], 'r', encoding='utf-8')
@@ -619,8 +648,8 @@ def build_item2item_data(config):
     item2item_test["label"] = label_dev
     return item2item_train, item2item_test
 
-def load_data_mind(config):
 
+def load_data_mind(config):
     entity_adj, relation_adj = construct_adj_mind(config)
 
     print('Primo Step')
@@ -653,7 +682,3 @@ def load_data_mind(config):
         return user_history, entity_embedding, relation_embedding, entity_adj, relation_adj, news_feature, max_entity_freq, max_entity_pos, max_entity_type, pop_train, pop_test
     else:
         print("task error, please check config")
-
-
-
-
