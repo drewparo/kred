@@ -15,9 +15,8 @@ data:
   relation_embedding : "./data/kg/wikidata-graph/relation2vecd100.vec"
   entity_index : "./data/kg/wikidata-graph/entity2id.txt"
   relation_index : "./data/kg/wikidata-graph/realtion2id.txt"
-  sparse_adj_entity : "./data/kg/adj_mind/entity_adj.npz"
-  sparse_adj_relation : "./data/kg/adj_mind/relation_adj.npz"
-
+  sparse_adj_entity : "./data/kg/adj_mind/entity_adj.npy"
+  sparse_adj_relation : "./data/kg/adj_mind/relation_adj.npy"
 
 model:
   document_embedding_dim: 768

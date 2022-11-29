@@ -396,11 +396,10 @@ def build_news_features_mind(config):
     return news_features, 100, 10, 100
 
 def construct_adj_mind(config):#graph is triple
-
     if os.path.exists(config['data']['sparse_adj_entity']) and os.path.exists(config['data']['sparse_adj_relation']):
-        print('using existing kg matrix')
-        sparse_adj_entity = sparse.load_npz(config['data']['sparse_adj_entity'])
-        sparse_adj_relation = sparse.load_npz(config['data']['sparse_adj_relation'])
+
+        sparse_adj_entity = np.load(config['data']['sparse_adj_entity'])
+        sparse_adj_relation = np.load(config['data']['sparse_adj_relation'])
         return sparse_adj_entity, sparse_adj_relation
     print('constructing adjacency matrix ...')
     graph_file_fp = open(config['data']['knowledge_graph'], 'r', encoding='utf-8')

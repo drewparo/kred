@@ -28,14 +28,14 @@ class KGAT(BaseModel):
             neighbor_relations.append([])
             for entity in entity_batch:
                 if type(entity) == int:
-                    neighbor_entities[-1].append(self.adj_entity[entity])
-                    neighbor_relations[-1].append(self.adj_relation[entity])
+                    neighbor_entities[-1].append(self.adj_entity[entity].tolist())
+                    neighbor_relations[-1].append(self.adj_relation[entity].tolist())
                 else:
                     neighbor_entities[-1].append([])
                     neighbor_relations[-1].append([])
                     for entity_i in entity:
-                        neighbor_entities[-1][-1].append(self.adj_entity[entity_i])
-                        neighbor_relations[-1][-1].append(self.adj_relation[entity_i])
+                        neighbor_entities[-1][-1].append(self.adj_entity[entity_i].tolist())
+                        neighbor_relations[-1][-1].append(self.adj_relation[entity_i].tolist())
 
         return neighbor_entities, neighbor_relations
 
