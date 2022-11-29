@@ -16,6 +16,7 @@ import zipfile
 #from logger.logger import *
 from tqdm import tqdm
 from scipy import sparse
+from IPython.display import clear_output
 
 
 def ensure_dir(dirname):
@@ -354,6 +355,7 @@ def build_news_features_mind(config):
     entity_type_index = 1
     model = SentenceTransformer('distilbert-base-nli-stsb-mean-tokens')
     train_size=0.40
+    clear_output()
     for news in news_feature_dict[:int(len(news_feature_dict)*train_size)]:
         sentence_embedding = model.encode(news_feature_dict[news][0])
         news_entity_feature_list = []
