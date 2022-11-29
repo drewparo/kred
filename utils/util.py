@@ -353,7 +353,8 @@ def build_news_features_mind(config):
     entity_type_dict = {}
     entity_type_index = 1
     model = SentenceTransformer('distilbert-base-nli-stsb-mean-tokens')
-    for news in news_feature_dict:
+    train_size=0.40
+    for news in news_feature_dict[:int(len(news_feature_dict)*train_size)]:
         sentence_embedding = model.encode(news_feature_dict[news][0])
         news_entity_feature_list = []
         title_entity_json = json.loads(news_feature_dict[news][1])
