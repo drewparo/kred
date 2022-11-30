@@ -370,7 +370,7 @@ def build_news_features_mind(config):
     entity_type_dict = {}
     entity_type_index = 1
     model = SentenceTransformer('distilbert-base-nli-stsb-mean-tokens')
-    train_size = int(0.40 * len(news_feature_dict))
+    train_size = int(0.10 * len(news_feature_dict))
     news_counter = 0
     for news in news_feature_dict:
         news_counter += 1
@@ -417,6 +417,7 @@ def build_news_features_mind(config):
         news_feature_list_ins[4] = sentence_embedding
         news_features[news] = news_feature_list_ins
     news_features["N0"] = [[], [], [], [], []]
+    print('Feature encoding done')
     for i in (i for i in range(config['model']['news_entity_num'])):
         for j in range(4):
             news_features["N0"][j].append(0)
