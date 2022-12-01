@@ -1,6 +1,6 @@
 import json
 import pickle
-
+import pandas as pd
 import torch
 import random
 import numpy as np
@@ -487,6 +487,15 @@ def construct_embedding_mind(config):
         relation_embedding.append(linesplit)
     return torch.FloatTensor(entity_embedding), torch.FloatTensor(relation_embedding)
 
+def construct_embedding_mind_optmized(config):
+    print('constructing embedding ... but optimized...')
+    fp_entity_embedding = pd.read_csv(config['data']['entity_embedding'], sep='\t', header=None, encoding='utf-8').to_numpy(dtype=np.float16)
+    fp_entity_embedding = np.vstack([np.zeros(config['model']['entity_embedding_dim']),fp_entity_embedding]).to_numpy(dtype=np.float16)
+    relation_embedding = pd.read_csv(config['data']['relation_embedding'], sep='\t', header=None, encoding='utf-8').to_numpy(dtype=np.float16)
+    relation_embedding = np.vstack([np.zeros(config['model']['entity_embedding_dim']),fp_relation_embedding]).to_numpy(dtype=np.float16)
+    return torch.HalfTensor(fp_entity_embedding), torch.HalfTensor(relation_embedding)
+
+
 
 def build_vert_data(config):
     random.seed(2020)
@@ -661,7 +670,11 @@ def load_data_mind(config):
 
     user_history = build_user_history(config)
 
-    entity_embedding, relation_embedding = construct_embedding_mind(config)
+    entity_embedding, relation_embedding = construct_embedding_mind_optmized(config)
+    """TODO: 
+    find out why construct_embedding_mind takes so much space -> 3M rows of floating point
+    
+    """
 
     if config['trainer']['training_type'] == "multi-task":
         train_data, dev_data = get_user2item_data(config)
