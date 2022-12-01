@@ -370,7 +370,7 @@ def build_news_features_mind(config):
     entity_type_dict = {}
     entity_type_index = 1
     model = SentenceTransformer('distilbert-base-nli-stsb-mean-tokens')
-    train_size = int(0.10 * len(news_feature_dict))
+    train_size = int(0.01 * len(news_feature_dict))
     news_counter = 0
     for news in news_feature_dict:
         news_counter += 1
@@ -490,9 +490,9 @@ def construct_embedding_mind(config):
 def construct_embedding_mind_optmized(config):
     print('constructing embedding ... but optimized...')
     fp_entity_embedding = pd.read_csv(config['data']['entity_embedding'], sep='\t', header=None, encoding='utf-8').to_numpy(dtype=np.float16)
-    fp_entity_embedding = np.vstack([np.zeros(config['model']['entity_embedding_dim']),fp_entity_embedding]).to_numpy(dtype=np.float16)
+    fp_entity_embedding = np.vstack([np.zeros(config['model']['entity_embedding_dim']),fp_entity_embedding[:,:100]]).astype(dtype=np.float16)
     relation_embedding = pd.read_csv(config['data']['relation_embedding'], sep='\t', header=None, encoding='utf-8').to_numpy(dtype=np.float16)
-    relation_embedding = np.vstack([np.zeros(config['model']['entity_embedding_dim']),fp_relation_embedding]).to_numpy(dtype=np.float16)
+    relation_embedding = np.vstack([np.zeros(config['model']['entity_embedding_dim']),relation_embedding[:,:100]]).astype(dtype=np.float16)
     return torch.HalfTensor(fp_entity_embedding), torch.HalfTensor(relation_embedding)
 
 
