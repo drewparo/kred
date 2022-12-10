@@ -370,12 +370,7 @@ def build_news_features_mind(config):
     entity_type_dict = {}
     entity_type_index = 1
     model = SentenceTransformer('distilbert-base-nli-stsb-mean-tokens')
-    train_size = int(0.01 * len(news_feature_dict))
-    news_counter = 0
     for news in news_feature_dict:
-        news_counter += 1
-        if news_counter > train_size:
-            break
         sentence_embedding = model.encode(news_feature_dict[news][0])
         clear_output()
         news_entity_feature_list = []
