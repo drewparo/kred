@@ -371,6 +371,7 @@ def build_news_features_mind(config):
     entity_type_index = 1
     model = SentenceTransformer('distilbert-base-nli-stsb-mean-tokens')
     for news in news_feature_dict:
+        #prp
         sentence_embedding = model.encode(news_feature_dict[news][0])
         clear_output()
         news_entity_feature_list = []
