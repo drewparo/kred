@@ -9,7 +9,7 @@ data:
   train_news : "/datasets/mind_train/news.tsv"
   train_behavior : "/datasets/mind_train/behaviors.tsv"
   valid_news : "/datasets/mind_val/news.tsv"
-  valid_behavior : "./datasets/mind_val/behaviors.tsv"
+  valid_behavior : "/datasets/mind_val/behaviors.tsv"
   knowledge_graph : "/datasets/mind_kg/triple2id.txt"
   entity_embedding : "/datasets/mind_kg/entity2vecd100.vec"
   relation_embedding : "/datasets/mind_kg/relation2vecd100.vec"
