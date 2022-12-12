@@ -134,8 +134,8 @@ class News_embedding(nn.Module):
         istitle_embedding = self.title_embeddings(torch.tensor(istitles).cuda())
         return istitle_embedding
 
-    def get_type_embedding(self, type):
-        type_embedding = self.type_embeddings(torch.tensor(type).cuda())
+    def get_type_embedding(self, type_):
+        type_embedding = self.type_embeddings(torch.tensor(type_).cuda())
         return type_embedding
 
 
@@ -143,12 +143,12 @@ class News_embedding(nn.Module):
         entities = self.get_entities_ids(news_id)
         entity_nums = self.get_entities_nums(news_id)
         istitle = self.get_position(news_id)
-        type = self.get_type(news_id)
+        type_ = self.get_type(news_id)
         context_vecs = self.get_context_vector(news_id)
-
-        entity_num_embedding = self.get_entity_num_embedding(entity_nums)
+        entity_num_embedding = self.get_entity_num_embedding(torch.LongTensor(entity_nums))
         istitle_embedding = self.get_title_embedding(istitle)
-        type_embedding = self.get_type_embedding(type)
+        type_embedding = self.get_type_embedding(type_)
+
         kgat_entity_embeddings = self.kgat(entities)  # batch(news num) * entity num
         news_entity_embedding = kgat_entity_embeddings + entity_num_embedding + istitle_embedding + type_embedding #todo
 
