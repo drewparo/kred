@@ -101,9 +101,8 @@ class KGAT(BaseModel):
         return aggregate_embedding
 
     def entity_ids_clearner(self, entity_ids):
-
         number_of_entities = self.entity_embedding.shape[0]
-        print('--- starting cleaning ---', number_of_entities)
+        #print('--- starting cleaning ---', number_of_entities)
         for batch in entity_ids:
             for i in batch:
                 for index, eny_id in enumerate(i):
@@ -126,8 +125,9 @@ class KGAT(BaseModel):
         # entity_ids_tensor = entity_ids_tensor.cuda()
 
         neighbor_entities, neighbor_relations = self.get_neighbors(entity_ids)
-        print(torch.tensor(entity_ids).max(), 'max1')
-        print(torch.tensor(neighbor_entities).max(), 'max12')
+        # Some entity do not have embeddings
+        #print(torch.tensor(entity_ids).max(), 'max1')
+        #print(torch.tensor(neighbor_entities).max(), 'max12')
 
         entity_embedding_lookup = nn.Embedding.from_pretrained(self.entity_embedding.cuda())
         relation_embedding_lookup = nn.Embedding.from_pretrained(self.relation_embedding.cuda())
@@ -143,6 +143,7 @@ class KGAT(BaseModel):
                                                                      entity_embedding_expand.shape[3])
             embedding_concat = torch.cat(
                 [entity_embedding_expand, neighbor_entity_embedding, neighbor_relation_embedding], 3)
+            embedding_concat = embedding_concat.to(torch.float32).cuda()
             attention_value = self.softmax(self.attention_layer2(self.relu(self.attention_layer1(embedding_concat))))
             neighbor_att_embedding = torch.sum(attention_value * neighbor_entity_embedding, dim=2)
             kgat_embedding = self.aggregate(entity_embedding, neighbor_att_embedding)
@@ -155,7 +156,7 @@ class KGAT(BaseModel):
                                                                      entity_embedding_expand.shape[4])
             embedding_concat = torch.cat(
                 [entity_embedding_expand, neighbor_entity_embedding, neighbor_relation_embedding], 4)
-            embedding_concat = embedding_concat.half()
+            embedding_concat = embedding_concat.to(torch.float32).cuda()
             attention_value = self.softmax(self.attention_layer2(self.relu(self.attention_layer1(embedding_concat))))
             neighbor_att_embedding = torch.sum(attention_value * neighbor_entity_embedding, dim=3)
             kgat_embedding = self.aggregate(entity_embedding, neighbor_att_embedding)
