@@ -145,7 +145,7 @@ class News_embedding(nn.Module):
         istitle = self.get_position(news_id)
         type_ = self.get_type(news_id)
         context_vecs = self.get_context_vector(news_id)
-        entity_num_embedding = self.get_entity_num_embedding(torch.LongTensor(entity_nums))
+        entity_num_embedding = self.get_entity_num_embedding(torch.LongTensor(entity_nums).cuda())
         istitle_embedding = self.get_title_embedding(istitle)
         type_embedding = self.get_type_embedding(type_)
 

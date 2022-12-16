@@ -50,6 +50,7 @@ class Trainer(BaseTrainer):
         all_loss = 0
         for step, batch in enumerate(self.train_dataloader):
             batch = real_batch(batch)
+
             out = self.model(batch['item1'], batch['item2'], self.config['trainer']['task'])[0]
             loss = self.criterion(out, torch.FloatTensor(batch['label']).cuda())
             all_loss = all_loss + loss

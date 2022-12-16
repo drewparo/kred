@@ -52,6 +52,7 @@ class KREDModel(nn.Module):
 
 
     def forward(self, user_features, news_features, task):
+
         if task == "item2item":
             user_embedding, top_indexs = self.news_embedding(user_features)
             candidate_news_embedding, topk_index = self.news_embedding(news_features)
