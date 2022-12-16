@@ -30,8 +30,18 @@ class KGAT(BaseModel):
             neighbor_relations.append([])
             for entity in entity_batch:
                 if type(entity) == int:
-                    neighbor_entities[-1].append(self.adj_entity[entity].tolist())
-                    neighbor_relations[-1].append(self.adj_relation[entity].tolist())
+                    entity_adj_list = self.adj_entity[entity].tolist()
+                    relation_adj_list = self.adj_relation[entity].tolist()
+                    for index, (entity_i, relation_i) in enumerate(zip(entity_adj_list, relation_adj_list)):
+                        if entity_i > number_of_entities:
+                            entity_adj_list.pop(index)
+                            relation_adj_list.pop(index)
+                            entity_adj_list.insert(index, 0)
+                            relation_adj_list.insert(index, 0)
+
+                    neighbor_entities[-1].append(entity_adj_list)
+                    neighbor_relations[-1].append(relation_adj_list)
+
                 else:
                     neighbor_entities[-1].append([])
                     neighbor_relations[-1].append([])
@@ -102,7 +112,15 @@ class KGAT(BaseModel):
 
     def entity_ids_clearner(self, entity_ids):
         number_of_entities = self.entity_embedding.shape[0]
-        #print('--- starting cleaning ---', number_of_entities)
+        if type(entity_ids[0][0]) == int:
+            for i in entity_ids:
+                for index, eny_id in enumerate(i):
+                    if eny_id > number_of_entities:
+                        i.pop(index)
+                        i.insert(index, 0)
+            return entity_ids
+
+        # print('--- starting cleaning ---', number_of_entities)
         for batch in entity_ids:
             for i in batch:
                 for index, eny_id in enumerate(i):
@@ -126,8 +144,8 @@ class KGAT(BaseModel):
 
         neighbor_entities, neighbor_relations = self.get_neighbors(entity_ids)
         # Some entity do not have embeddings
-        #print(torch.tensor(entity_ids).max(), 'max1')
-        #print(torch.tensor(neighbor_entities).max(), 'max12')
+        # print(torch.tensor(entity_ids).max(), 'max1')
+        # print(torch.tensor(neighbor_entities).max(), 'max12')
 
         entity_embedding_lookup = nn.Embedding.from_pretrained(self.entity_embedding.cuda())
         relation_embedding_lookup = nn.Embedding.from_pretrained(self.relation_embedding.cuda())

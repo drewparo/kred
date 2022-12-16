@@ -9,11 +9,11 @@ from base.base_trainer import BaseTrainer
 from logger.logger import *
 
 
-
 class Trainer(BaseTrainer):
     """
     Trainer class
     """
+
     def __init__(self, config, model, criterion, optimizer, device, train_dataloader, valid_data):
         super().__init__()
 
@@ -39,7 +39,6 @@ class Trainer(BaseTrainer):
         self.train_dataloader = train_dataloader
         self.test_data = valid_data
 
-
     def _train_epoch(self, epoch):
         """
         Training logic for an epoch
@@ -49,8 +48,10 @@ class Trainer(BaseTrainer):
         self.model.train()
         all_loss = 0
         for step, batch in enumerate(self.train_dataloader):
-            batch = real_batch(batch)
+            if step % 100 == 0:
+                print('######\n', f'Step: {step}, {step / len(self.train_dataloader)}', '\n######')
 
+            batch = real_batch(batch)
             out = self.model(batch['item1'], batch['item2'], self.config['trainer']['task'])[0]
             loss = self.criterion(out, torch.FloatTensor(batch['label']).cuda())
             all_loss = all_loss + loss
@@ -60,7 +61,6 @@ class Trainer(BaseTrainer):
 
         torch.save(self.model, './out/saved/models/KRED/checkpoint.pt')
         print("all loss: " + str(all_loss))
-
 
     def _valid_epoch(self, epoch):
         """
@@ -76,12 +76,13 @@ class Trainer(BaseTrainer):
                 end = start + int(self.config['data_loader']['batch_size'])
             else:
                 end = len(self.test_data['label'])
-            out = self.model(self.test_data['item1'][start:end], self.test_data['item2'][start:end], self.config['trainer']['task'])[
+            out = self.model(self.test_data['item1'][start:end], self.test_data['item2'][start:end],
+                             self.config['trainer']['task'])[
                 0].cpu().data.numpy()
 
             y_pred.extend(out)
         truth = self.test_data['label']
-        auc_score = cal_auc(truth, y_pred) # had to switch input parameters for it to work
+        auc_score = cal_auc(truth, y_pred)  # had to switch input parameters for it to work
         print("auc socre: " + str(auc_score))
         return auc_score
 
@@ -97,7 +98,6 @@ class Trainer(BaseTrainer):
         torch.save(state_model, filename_model)
         self.logger.info("Saving checkpoint: {} ...".format(filename_model))
 
-
     def train(self):
         """
             Full training logic
@@ -107,7 +107,8 @@ class Trainer(BaseTrainer):
         logger_train.info("model training")
         valid_scores = []
         early_stopping = EarlyStopping(patience=self.config['trainer']['early_stop'], verbose=True)
-        for epoch in range(self.start_epoch, self.epochs+1):
+        for epoch in range(self.start_epoch, self.epochs + 1):
+            print(f'Training epoch {epoch - 1}/{self.epochs + 1} - {(epoch - 1) / (self.epochs + 1)}')
             self._train_epoch(epoch)
             valid_socre = self._valid_epoch(epoch)
             valid_scores.append(valid_socre)
