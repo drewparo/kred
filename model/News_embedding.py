@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from model.KGAT import KGAT
+import numpy as np
 
 
 class News_embedding(nn.Module):
@@ -152,7 +153,7 @@ class News_embedding(nn.Module):
         kgat_entity_embeddings = self.kgat(entities)  # batch(news num) * entity num
         news_entity_embedding = kgat_entity_embeddings + entity_num_embedding + istitle_embedding + type_embedding #todo
 
-        aggregate_embedding, topk_index = self.attention_layer(news_entity_embedding, torch.FloatTensor(context_vecs).cuda())
+        aggregate_embedding, topk_index = self.attention_layer(news_entity_embedding, torch.FloatTensor(np.array(context_vecs)).cuda())
 
         concat_embedding = torch.cat([aggregate_embedding, torch.FloatTensor(context_vecs).cuda()],
                                     len(aggregate_embedding.shape) - 1)
