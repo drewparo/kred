@@ -149,7 +149,7 @@ class News_embedding(nn.Module):
         context_vecs = self.get_context_vector(news_id)
         context_vecs = torch.FloatTensor(np.array(context_vecs)).cuda()
 
-        entity_num_embedding = self.get_entity_num_embedding(entity_nums.cuda())
+        entity_num_embedding = self.get_entity_num_embedding(entity_nums)
         istitle_embedding = self.get_title_embedding(istitle)
         type_embedding = self.get_type_embedding(type_)
 
