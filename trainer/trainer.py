@@ -48,7 +48,7 @@ class Trainer(BaseTrainer):
         self.model.train()
         all_loss = 0
         for step, batch in enumerate(self.train_dataloader):
-            if step % 100 == 0:
+            if step % 1000 == 0:
                 print('######\n', f'Step: {step}, {step / len(self.train_dataloader)}', '\n######')
 
             batch = real_batch(batch)
@@ -110,12 +110,16 @@ class Trainer(BaseTrainer):
         for epoch in range(self.start_epoch, self.epochs + 1):
             print(f'Training epoch {epoch - 1}/{self.epochs + 1} - {(epoch - 1) / (self.epochs + 1)}')
             self._train_epoch(epoch)
+            print('_train_epoch')
             valid_socre = self._valid_epoch(epoch)
+            print('valid_socre')
             valid_scores.append(valid_socre)
+            print('valid_scores')
             early_stopping(valid_socre, self.model)
+            print('early_stopping')
             if early_stopping.early_stop:
+                print('early_stopping.early_stop')
                 logger_train.info("Early stopping")
-
             if epoch % self.save_period == 0:
                 self._save_checkpoint(epoch)
-
+                print('epoch % self.save_period')
