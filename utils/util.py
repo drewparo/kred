@@ -369,7 +369,7 @@ def build_news_features_mind(config):
     # deal with doc feature
     entity_type_dict = {}
     entity_type_index = 1
-    model = SentenceTransformer('distilbert-base-nli-stsb-mean-tokens')
+    model = SentenceTransformer('all-mpnet-base-v2')
     for news in news_feature_dict:
         #prp
         sentence_embedding = model.encode(news_feature_dict[news][0])
