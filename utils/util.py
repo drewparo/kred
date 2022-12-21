@@ -691,4 +691,5 @@ def load_data_mind(config):
         pop_train, pop_test = build_pop_data(config)
         return user_history, entity_embedding, relation_embedding, entity_adj, relation_adj, news_feature, max_entity_freq, max_entity_pos, max_entity_type, pop_train, pop_test
     else:
+        #new
         print("task error, please check config")
