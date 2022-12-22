@@ -60,11 +60,9 @@ def cleaner(config):
             dst_train = '/'.join(config["data"]["train_news"].split('/')[:-1]) + '/'
             shutil.copy(src_train, dst_train)
         return config
-    except OSError as e:
-        print('Could not overwrite old file, replacing name in config')
+    except Exception as e:
+        print(e)
+        print('Replacing name in config')
         config['data']['train_news'] = 'tmp/train_' + config["data"]["train_news"].split('/')[-1]
         config['data']['valid_news'] = 'tmp/test_' + config["data"]["valid_news"].split('/')[-1]
         return config
-
-
-
