@@ -62,6 +62,6 @@ def cleaner(config):
         return config
     except:
         print('Replacing name in config')
-        config['data']['train_news'] = 'tmp/train_' + config["data"]["train_news"].split('/')[-1]
-        config['data']['valid_news'] = 'tmp/test_' + config["data"]["valid_news"].split('/')[-1]
+        config['data']['train_news'] = os.path.abspath('tmp/test_' + config["data"]["valid_news"].split('/')[-1])
+        config['data']['valid_news'] = os.path.abspath('tmp/train_' + config["data"]["train_news"].split('/')[-1])
         return config

@@ -12,7 +12,7 @@ data:
   valid_behavior : "/datasets/mind_val/behaviors.tsv"
   knowledge_graph : "/datasets/mind_kg/triple2id.txt"
   entity_embedding : "/datasets/mind_kg/entity2vecd100.vec"
-  num_entity_embedding: 3241390
+  num_entity_embedding: 3275150
   relation_embedding : "/datasets/mind_kg/relation2vecd100.vec"
   entity_index : "/datasets/mind_kg/entity2id.txt"
   relation_index : "/datasets/mind_kg/realtion2id.txt"
