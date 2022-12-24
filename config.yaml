@@ -1,7 +1,7 @@
 name: "KRED"
 n_gpu: 1
 data_loader:
-    batch_size: 256
+    batch_size: 128
     shuffle: true
     num_workers: 1
 
@@ -18,6 +18,7 @@ data:
   relation_index : "/datasets/mind_kg/realtion2id.txt"
   sparse_adj_entity : "/datasets/mind_kg/entity_adj.npy"
   sparse_adj_relation : "/datasets/mind_kg/relation_adj.npy"
+  mind_data : "/notebooks/data_saved.pkl"
 
 model:
   document_embedding_dim: 768

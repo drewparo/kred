@@ -48,7 +48,7 @@ class Trainer(BaseTrainer):
         self.model.train()
         all_loss = 0
         for step, batch in enumerate(self.train_dataloader):
-            if step % 1000 == 0:
+            if step % 100 == 0:
                 print('######\n', f'Step: {step}, {step / len(self.train_dataloader)}', '\n######')
 
             batch = real_batch(batch)
