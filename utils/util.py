@@ -1,6 +1,4 @@
 import json
-import pickle
-import pandas as pd
 import torch
 import random
 import numpy as np
@@ -9,39 +7,99 @@ import os
 from pathlib import Path
 from itertools import repeat
 from collections import OrderedDict
+
+from IPython.core.display_functions import clear_output
 from sentence_transformers import SentenceTransformer
 import requests
 import math
 import zipfile
-# from logger.logger import *
+#from logger.logger import *
 from tqdm import tqdm
-from scipy import sparse
-from IPython.display import clear_output
+import pickle
 
+
+# Create file and save data using pickle
+def save_to_pickle(data, file_name):
+    with open(file_name, "wb") as fp:
+        pickle.dump(data, fp)
+
+# Load data from file using pickle
+def load_from_pickle(filename):
+    with open(filename, "rb") as fp:
+        data = pickle.load(fp)
+    return data
+
+# Returns all the entities in the news dataset
+def entities_news(config):
+    entities = set()
+    # Read entities from train news
+    with open(config["data"]["train_news"]) as fp:
+        for line in fp:
+            newsid, vert, subvert, title, abstract, url, entity_info_title, entity_info_abstract = line.strip().split('\t')
+            # Add entities in the title
+            for entity in eval(entity_info_title):
+                entities.add(entity["WikidataId"])
+            # Add entities in the abstract
+            for entity in eval(entity_info_abstract):
+                entities.add(entity["WikidataId"])
+    # Read entities from valid news
+    with open(config["data"]["valid_news"]) as fp:
+        for line in fp:
+            newsid, vert, subvert, title, abstract, url, entity_info_title, entity_info_abstract = line.strip().split('\t')
+            # Add entities in the title
+            for entity in eval(entity_info_title):
+                entities.add(entity["WikidataId"])
+            # Add entities in the abstract
+            for entity in eval(entity_info_abstract):
+                entities.add(entity["WikidataId"])
+    return entities
+
+# Return a dictionary from entity names to ids
+def entity_to_id(config, entities):
+  entity2id_dict = {}
+  # Get the association entity-id from the file
+  with open(config["data"]["entity_index"]) as fp:
+    entity_num = int(fp.readline().split('\n')[0])
+    for line in fp:
+        entity, entityid = line.strip().split('\t')
+        if entity in entities:
+            # Entity id is increased by one in order to be compatible with all the following operations
+            entity2id_dict[entity] = int(entityid) + 1
+  return entity2id_dict
+
+# Return a dictionary from entity ids to names
+def id_to_entity(config, ids):
+  entity2id_dict = {}
+  # Get the association entity-id from the file
+  with open(config["data"]["entity_index"]) as fp:
+    entity_num = int(fp.readline().split('\n')[0])
+    for line in fp:
+        entity, entityid = line.strip().split('\t')
+        # Since the entity ids are increased by one when reading from the file,
+        # then it is also done here before the comparison
+        if int(entityid) + 1 in ids:
+            entity2id_dict[entity] = int(entityid) + 1
+  return entity2id_dict
 
 def ensure_dir(dirname):
     dirname = Path(dirname)
     if not dirname.is_dir():
         dirname.mkdir(parents=True, exist_ok=False)
 
-
 def read_json(fname):
     fname = Path(fname)
     with fname.open('rt') as handle:
         return json.load(handle, object_hook=OrderedDict)
-
 
 def write_json(content, fname):
     fname = Path(fname)
     with fname.open('wt') as handle:
         json.dump(content, handle, indent=4, sort_keys=False)
 
-
 def inf_loop(data_loader):
     ''' wrapper function for endless data loader. '''
     for loader in repeat(data_loader):
         yield from loader
-
 
 def prepare_device(n_gpu_use):
     """
@@ -60,8 +118,7 @@ def prepare_device(n_gpu_use):
     list_ids = list(range(n_gpu_use))
     return device, list_ids
 
-
-def construct_adj(graph_file, entity2id_file, args):  # graph is triple
+def construct_adj(graph_file, entity2id_file, args):#graph is triple
     print('constructing adjacency matrix ...')
     graph_file_fp = open(graph_file, 'r', encoding='utf-8')
     graph = []
@@ -92,12 +149,12 @@ def construct_adj(graph_file, entity2id_file, args):  # graph is triple
         relation_adj.append([])
     for key in kg.keys():
         for index in range(args.entity_neighbor_num):
-            i = random.randint(0, len(kg[key]) - 1)
+            i = random.randint(0,len(kg[key])-1)
             entity_adj[int(key)].append(int(kg[key][i][0]))
             relation_adj[int(key)].append(int(kg[key][i][1]))
-
+    entity_adj = np.array(entity_adj)
+    relation_adj = np.array(relation_adj)
     return entity_adj, relation_adj
-
 
 def construct_embedding(entity_embedding_file, relation_embedding_file):
     print('constructing embedding ...')
@@ -115,10 +172,8 @@ def construct_embedding(entity_embedding_file, relation_embedding_file):
         relation_embedding.append(linesplit)
     return torch.FloatTensor(entity_embedding), torch.FloatTensor(relation_embedding)
 
-
 def my_collate_fn(batch):
     return batch
-
 
 def construct_entity_dict(entity_file):
     fp_entity2id = open(entity_file, 'r', encoding='utf-8')
@@ -130,7 +185,6 @@ def construct_entity_dict(entity_file):
         entity_dict[entity] = entityid
     return entity_dict
 
-
 def real_batch(batch):
     data = {}
     data['item1'] = []
@@ -141,7 +195,6 @@ def real_batch(batch):
         data['item2'].append(item['item2'])
         data['label'].append(item['label'])
     return data
-
 
 def maybe_download(url, filename=None, work_directory=".", expected_bytes=None):
     """Download a file if it is not already downloaded.
@@ -182,7 +235,6 @@ def maybe_download(url, filename=None, work_directory=".", expected_bytes=None):
 
     return filepath
 
-
 def unzip_file(zip_src, dst_dir, clean_zip_file=True):
     """Unzip a file
 
@@ -197,7 +249,6 @@ def unzip_file(zip_src, dst_dir, clean_zip_file=True):
     if clean_zip_file:
         os.remove(zip_src)
 
-
 def get_mind_data_set(type):
     """ Get MIND dataset address
 
@@ -207,7 +258,7 @@ def get_mind_data_set(type):
     Returns:
         list: data url and train valid dataset name
     """
-    assert type in ["large", "small", "demo"]
+    assert type in ["large", "small"]
 
     if type == "large":
         return (
@@ -233,7 +284,6 @@ def get_mind_data_set(type):
             "MINDdemo_utils.zip",
         )
 
-
 def download_deeprec_resources(azure_container_url, data_path, remote_resource_name):
     """Download resources.
 
@@ -249,7 +299,6 @@ def download_deeprec_resources(azure_container_url, data_path, remote_resource_n
     zip_ref.extractall(data_path)
     zip_ref.close()
     os.remove(os.path.join(data_path, remote_resource_name))
-
 
 def get_user2item_data(config):
     negative_num = config['trainer']['train_neg_num']
@@ -270,7 +319,7 @@ def get_user2item_data(config):
             else:
                 negative_list.append(newsid)
         for pos_news in positive_list:
-            user_id.append(userid + "_train")
+            user_id.append(userid+ "_train")
             if len(negative_list) >= negative_num:
                 neg_news = random.sample(negative_list, negative_num)
             else:
@@ -301,7 +350,7 @@ def get_user2item_data(config):
         for news in behavior:
             newsid, news_label = news.split('-')
             session_id.append(index)
-            user_id.append(userid + "_dev")
+            user_id.append(userid+ "_dev")
             if news_label == "1":
                 news_id.append(newsid)
                 label.append(1.0)
@@ -316,17 +365,16 @@ def get_user2item_data(config):
 
     return train_data, dev_data
 
-
 def build_user_history(config):
     user_history_dict = {}
     fp_train_behavior = open(config['data']['train_behavior'], 'r', encoding='utf-8')
     for line in fp_train_behavior:
         index, user_id, imp_time, history, behavior = line.strip().split('\t')
         if len(history.split(' ')) >= config['model']['user_his_num']:
-            user_history_dict[user_id + "_train"] = history.split(' ')[:config['model']['user_his_num']]
+            user_history_dict[user_id+"_train"] = history.split(' ')[:config['model']['user_his_num']]
         else:
             user_history_dict[user_id + "_train"] = history.split(' ')
-            for i in range(config['model']['user_his_num'] - len(history.split(' '))):
+            for i in range(config['model']['user_his_num']-len(history.split(' '))):
                 user_history_dict[user_id + "_train"].append("N0")
             if user_history_dict[user_id + "_train"][0] == '':
                 user_history_dict[user_id + "_train"][0] = 'N0'
@@ -335,45 +383,45 @@ def build_user_history(config):
     for line in fp_dev_behavior:
         index, user_id, imp_time, history, behavior = line.strip().split('\t')
         if len(history.split(' ')) >= config['model']['user_his_num']:
-            user_history_dict[user_id + "_dev"] = history.split(' ')[:config['model']['user_his_num']]
+            user_history_dict[user_id+"_dev"] = history.split(' ')[:config['model']['user_his_num']]
         else:
             user_history_dict[user_id + "_dev"] = history.split(' ')
-            for i in range(config['model']['user_his_num'] - len(history.split(' '))):
+            for i in range(config['model']['user_his_num']-len(history.split(' '))):
                 user_history_dict[user_id + "_dev"].append("N0")
             if user_history_dict[user_id + "_dev"][0] == '':
                 user_history_dict[user_id + "_dev"][0] = 'N0'
     return user_history_dict
 
-
-def build_news_features_mind(config):
-    entity2id_dict = {}
-    fp_entity2id = open(config['data']['entity_index'], 'r', encoding='utf-8')
-    entity_num = int(fp_entity2id.readline().split('\n')[0])
-    for line in fp_entity2id.readlines():
-        entity, entityid = line.strip().split('\t')
-        entity2id_dict[entity] = int(entityid) + 1
-
+def build_news_features_mind(config, entity2embedding_dict, embedding_folder=None):
     news_features = {}
 
     news_feature_dict = {}
     fp_train_news = open(config['data']['train_news'], 'r', encoding='utf-8')
     for line in fp_train_news:
         newsid, vert, subvert, title, abstract, url, entity_info_title, entity_info_abstract = line.strip().split('\t')
-        news_feature_dict[newsid] = (title + " " + abstract, entity_info_title, entity_info_abstract)
+        news_feature_dict[newsid] = (title+" "+abstract, entity_info_title, entity_info_abstract)
     # entityid, entity_freq, entity_position, entity_type
     fp_dev_news = open(config['data']['valid_news'], 'r', encoding='utf-8')
     for line in fp_dev_news:
         newsid, vert, subvert, title, abstract, url, entity_info_title, entity_info_abstract = line.strip().split('\t')
         news_feature_dict[newsid] = (title + " " + abstract, entity_info_title, entity_info_abstract)
 
-    # deal with doc feature
+    #deal with doc feature
     entity_type_dict = {}
     entity_type_index = 1
-    model = SentenceTransformer('all-mpnet-base-v2')
-    for news in news_feature_dict:
-        #prp
-        sentence_embedding = model.encode(news_feature_dict[news][0])
-        clear_output()
+    # Load sentence embeddings from files if present
+    if embedding_folder is not None:
+        sentences_embedding = load_from_pickle(embedding_folder + "train_news_embeddings")
+        sentences_embedding.extend(load_from_pickle(embedding_folder + "valid_news_embeddings"))
+    else:
+        model = SentenceTransformer('all-mpnet-base-v2')
+
+    for i, news in enumerate(news_feature_dict):
+        if embedding_folder is not None:
+            sentence_embedding = sentences_embedding[i]
+        else:
+            sentence_embedding = model.encode(news_feature_dict[news][0])
+            clear_output()
         news_entity_feature_list = []
         title_entity_json = json.loads(news_feature_dict[news][1])
         abstract_entity_json = json.loads(news_feature_dict[news][2])
@@ -382,13 +430,10 @@ def build_news_features_mind(config):
             if item['Type'] not in entity_type_dict:
                 entity_type_dict[item['Type']] = entity_type_index
                 entity_type_index = entity_type_index + 1
-            news_entity_feature[item['WikidataId']] = (len(item['OccurrenceOffsets']), 1, entity_type_dict[
-                item['Type']])  # entity_freq, entity_position, entity_type
+            news_entity_feature[item['WikidataId']] = (len(item['OccurrenceOffsets']), 1, entity_type_dict[item['Type']]) #entity_freq, entity_position, entity_type
         for item in abstract_entity_json:
             if item['WikidataId'] in news_entity_feature:
-                news_entity_feature[item['WikidataId']] = (
-                news_entity_feature[item['WikidataId']][0] + len(item['OccurrenceOffsets']), 1,
-                entity_type_dict[item['Type']])
+                news_entity_feature[item['WikidataId']] = (news_entity_feature[item['WikidataId']][0] + len(item['OccurrenceOffsets']), 1, entity_type_dict[item['Type']])
             else:
                 if item['Type'] not in entity_type_dict:
                     entity_type_dict[item['Type']] = entity_type_index
@@ -396,102 +441,91 @@ def build_news_features_mind(config):
                 news_entity_feature[item['WikidataId']] = (len(item['OccurrenceOffsets']), 2, entity_type_dict[
                     item['Type']])  # entity_freq, entity_position, entity_type
         for entity in news_entity_feature:
-            if entity in entity2id_dict:
-                news_entity_feature_list.append(
-                    [entity2id_dict[entity], news_entity_feature[entity][0], news_entity_feature[entity][1],
-                     news_entity_feature[entity][2]])
+            if entity in entity2embedding_dict:
+                news_entity_feature_list.append([entity2embedding_dict[entity], news_entity_feature[entity][0], news_entity_feature[entity][1], news_entity_feature[entity][2]])
         news_entity_feature_list.append([0, 0, 0, 0])
         if len(news_entity_feature_list) > config['model']['news_entity_num']:
             news_entity_feature_list = news_entity_feature_list[:config['model']['news_entity_num']]
         else:
-            for i in (i for i in range(len(news_entity_feature_list), config['model']['news_entity_num'])):
+            for i in range(len(news_entity_feature_list), config['model']['news_entity_num']):
                 news_entity_feature_list.append([0, 0, 0, 0])
-        news_feature_list_ins = [[], [], [], [], []]
-        for i in (i for i in range(len(news_entity_feature_list))):
+        news_feature_list_ins = [[],[],[],[],[]]
+        for i in range(len(news_entity_feature_list)):
             for j in range(4):
                 news_feature_list_ins[j].append(news_entity_feature_list[i][j])
         news_feature_list_ins[4] = sentence_embedding
         news_features[news] = news_feature_list_ins
-    news_features["N0"] = [[], [], [], [], []]
-    print('Feature encoding done')
-    for i in (i for i in range(config['model']['news_entity_num'])):
+    news_features["N0"] = [[],[],[],[],[]]
+    for i in range(config['model']['news_entity_num']):
         for j in range(4):
             news_features["N0"][j].append(0)
     news_features["N0"][4] = np.zeros(config['model']['document_embedding_dim'])
     return news_features, 100, 10, 100
 
-
-def construct_adj_mind(config):  # graph is triple
-    if os.path.exists(config['data']['sparse_adj_entity']) and os.path.exists(config['data']['sparse_adj_relation']):
-        sparse_adj_entity = np.load(config['data']['sparse_adj_entity'])
-        sparse_adj_relation = np.load(config['data']['sparse_adj_relation'])
-        return sparse_adj_entity, sparse_adj_relation
+def construct_adj_mind(config, entity2id_dict, entity2embedding_dict):#graph is triple
     print('constructing adjacency matrix ...')
-    graph_file_fp = open(config['data']['knowledge_graph'], 'r', encoding='utf-8')
-    kg = {}
-    for line in graph_file_fp:
-        linesplit = line.split('\n')[0].split('\t')
-        head = int(linesplit[0]) + 1
-        relation = int(linesplit[2]) + 1
-        tail = int(linesplit[1]) + 1
-        if head not in kg:
-            kg[head] = []
-        kg[head].append((tail, relation))
-        if tail not in kg:
-            kg[tail] = []
-        kg[tail].append((head, relation))
-        del linesplit, head, relation, tail
+    entities_ids = set(entity2id_dict.values())
+    with open(config['data']['knowledge_graph'], 'r', encoding='utf-8') as graph_file_fp:
+      kg = {}
+      for line in graph_file_fp:
+          linesplit = line.split('\n')[0].split('\t')
+          head = int(linesplit[0])+1
+          relation = int(linesplit[2])+1
+          tail = int(linesplit[1])+1
+          # treat the KG as an undirected graph
+          # Restrict only to the selected entities and their relations
+          if head in entities_ids:
+            if head not in kg:
+                kg[head] = []
+            kg[head].append((tail, relation))
+          if tail in entities_ids:
+            if tail not in kg:
+                kg[tail] = []
+            kg[tail].append((head, relation))
 
-    fp_entity2id = open(config['data']['entity_index'], 'r', encoding='utf-8')
-    entity_num = int(fp_entity2id.readline().split('\n')[0]) + 1
-    print(entity_num)
+    entity_num = len(entity2embedding_dict)
     entity_adj = []
     relation_adj = []
-    for i in (i for i in range(entity_num + 1)):
+    id2entity_dict = {v: k for k, v in entity2id_dict.items()}
+    for i in range(entity_num+1):
         entity_adj.append([])
         relation_adj.append([])
-    for i in (i for i in range(config['model']['entity_neighbor_num'])):
+    for i in range(config['model']['entity_neighbor_num']):
         entity_adj[0].append(0)
         relation_adj[0].append(0)
     for key in kg.keys():
-        for index in (i for i in range(config['model']['entity_neighbor_num'])):
-            i = random.randint(0, len(kg[key]) - 1)
-            entity_adj[int(key)].append(int(kg[key][i][0]))
-            relation_adj[int(key)].append(int(kg[key][i][1]))
-
-    del kg
+        for index in range(config['model']['entity_neighbor_num']):
+            i = random.randint(0,len(kg[key])-1)
+            # Convert the id to the new one
+            new_key = entity2embedding_dict[id2entity_dict[int(key)]]
+            entity_adj[new_key].append(int(kg[key][i][0]))
+            relation_adj[new_key].append(int(kg[key][i][1]))
 
     return entity_adj, relation_adj
 
-
-def construct_embedding_mind(config):
+# Load the emdedding of the entities in entity2id_dict, append them to entity_embedding and
+# update entity2embedding_dict
+def construct_embedding_mind(config, entity2id_dict, entity_embedding, entity2embedding_dict):
     print('constructing embedding ...')
-    entity_embedding = []
     relation_embedding = []
-    fp_entity_embedding = open(config['data']['entity_embedding'], 'r', encoding='utf-8')
-    fp_relation_embedding = open(config['data']['relation_embedding'], 'r', encoding='utf-8')
     zero_array = np.zeros(config['model']['entity_embedding_dim'])
-    entity_embedding.append(zero_array)
     relation_embedding.append(zero_array)
-    for line in fp_entity_embedding:
-        linesplit = line.strip().split('\t')
-        linesplit = [float(i) for i in linesplit]
-        entity_embedding.append(linesplit)
-    for line in fp_relation_embedding:
-        linesplit = line.strip().split('\t')
-        linesplit = [float(i) for i in linesplit]
-        relation_embedding.append(linesplit)
-    return torch.FloatTensor(entity_embedding), torch.FloatTensor(relation_embedding)
-
-def construct_embedding_mind_optmized(config):
-    print('constructing embedding ... but optimized...')
-    fp_entity_embedding = pd.read_csv(config['data']['entity_embedding'], sep='\t', header=None, encoding='utf-8').to_numpy(dtype=np.float16)
-    fp_entity_embedding = np.vstack([np.zeros(config['model']['entity_embedding_dim']),fp_entity_embedding[:,:100]]).astype(dtype=np.float16)
-    relation_embedding = pd.read_csv(config['data']['relation_embedding'], sep='\t', header=None, encoding='utf-8').to_numpy(dtype=np.float16)
-    relation_embedding = np.vstack([np.zeros(config['model']['entity_embedding_dim']),relation_embedding[:,:100]]).astype(dtype=np.float16)
-    return torch.HalfTensor(fp_entity_embedding), torch.HalfTensor(relation_embedding)
-
-
+    id2entity_dict = {v: k for k, v in entity2id_dict.items()}
+    with open(config['data']['entity_embedding'], 'r', encoding='utf-8') as fp_entity_embedding:
+        i = 1
+        for line in fp_entity_embedding:
+            if i in id2entity_dict:
+              linesplit = line.strip().split('\t')
+              linesplit = [float(i) for i in linesplit]
+              entity2embedding_dict[id2entity_dict[i]] = len(entity_embedding)
+              entity_embedding.append(linesplit)
+            i += 1
+    with open(config['data']['relation_embedding'], 'r', encoding='utf-8') as fp_relation_embedding:
+        for line in fp_relation_embedding:
+            linesplit = line.strip().split('\t')
+            linesplit = [float(i) for i in linesplit]
+            relation_embedding.append(linesplit)
+    return entity2embedding_dict, entity_embedding, relation_embedding
 
 def build_vert_data(config):
     random.seed(2020)
@@ -515,7 +549,7 @@ def build_vert_data(config):
         all_news_data.append((newsid, vert_label_dict[vert]))
     print(vert_label_dict)
     for i in range(len(all_news_data)):
-        if random.random() < 0.8:
+        if random.random()<0.8:
             item1_list_train.append("U0")
             item2_list_train.append(all_news_data[i][0])
             label_list_train.append(all_news_data[i][1])
@@ -532,7 +566,6 @@ def build_vert_data(config):
 
     return vert_train, vert_dev
 
-
 def build_pop_data(config):
     fp_train = open(config['data']['train_behavior'], 'r', encoding='utf-8')
     news_imp_dict = {}
@@ -545,17 +578,16 @@ def build_pop_data(config):
             newsid, news_label = news.split('-')
             if news_label == "1":
                 if newsid not in news_imp_dict:
-                    news_imp_dict[newsid] = [1, 1]
+                    news_imp_dict[newsid] = [1,1]
                 else:
                     news_imp_dict[newsid][0] = news_imp_dict[newsid][0] + 1
                     news_imp_dict[newsid][1] = news_imp_dict[newsid][1] + 1
             else:
                 if newsid not in news_imp_dict:
-                    news_imp_dict[newsid] = [0, 1]
+                    news_imp_dict[newsid] = [0,1]
                 else:
                     news_imp_dict[newsid][1] = news_imp_dict[newsid][1] + 1
     return pop_train, pop_test
-
 
 def build_item2item_data(config):
     fp_train = open(config['data']['train_behavior'], 'r', encoding='utf-8')
@@ -654,23 +686,44 @@ def build_item2item_data(config):
     item2item_test["label"] = label_dev
     return item2item_train, item2item_test
 
+def load_data_mind(config, embedding_folder=None):
+    # Build the dictionary for all the entities in the news
+    entity2id_dict = entity_to_id(config, entities_news(config))
 
-def load_data_mind(config):
-    entity_adj, relation_adj = construct_adj_mind(config)
+    # Initialize the list containing all the embeddings
+    entity_embedding = []
+    # Ids start from 1, so append a list of zeros at index 0
+    entity_embedding.append(np.zeros(config['model']['entity_embedding_dim']))
+    # Initialize the dictionary mapping the entity name and the position of embedding in the list
+    entity2embedding_dict = {}
+    # Load only the embeddings of the entities in the news
+    entity2embedding_dict, entity_embedding, relation_embedding = construct_embedding_mind(config, entity2id_dict, entity_embedding, entity2embedding_dict)
 
-    print('Primo Step')
+    # For each entity in the news, get the neighbours entities in the wikidata graph and their relations
+    entity_adj, relation_adj = construct_adj_mind(config, entity2id_dict, entity2embedding_dict)
 
-    news_feature, max_entity_freq, max_entity_pos, max_entity_type = build_news_features_mind(config)
+    # Some of the entities in the neighborhood are not part of the entities in the news, so after having identiefied them,
+    # their embedding is added to the list and they are added to the dictionary of entity2embedding
+    entities_not_embedded = set([item for items in entity_adj for item in items]).difference(set(entity2id_dict.values()))
+    entity2id_dict_not_embedded = id_to_entity(config, entities_not_embedded)
+    entity2embedding_dict, entity_embedding, relation_embedding = construct_embedding_mind(config, entity2id_dict_not_embedded, entity_embedding, entity2embedding_dict)
 
-    print('Secondo Step')
+    # Add the new entities to the dictionary
+    entity2id_dict.update(entity2id_dict_not_embedded)
+    # Invert the dictionary
+    id2entity_dict = {v: k for k, v in entity2id_dict.items()}
+    # The ids in entity_adj are the original ones, they need to be updated to the new ids given by entity2embedding_dict
+    for i in range(1, len(entity_adj)):
+        for j in range(0, len(entity_adj[i])):
+            entity_adj[i][j] = entity2embedding_dict[id2entity_dict[entity_adj[i][j]]]
+    entity_embedding = torch.FloatTensor(np.array(entity_embedding))
+    relation_embedding = torch.FloatTensor(np.array(relation_embedding))
 
+    # Load the news
+    news_feature, max_entity_freq, max_entity_pos, max_entity_type = build_news_features_mind(config, entity2embedding_dict, embedding_folder)
+
+    # Load the user history
     user_history = build_user_history(config)
-
-    entity_embedding, relation_embedding = construct_embedding_mind_optmized(config)
-    """TODO: 
-    find out why construct_embedding_mind takes so much space -> 3M rows of floating point
-    
-    """
 
     if config['trainer']['training_type'] == "multi-task":
         train_data, dev_data = get_user2item_data(config)
@@ -691,5 +744,4 @@ def load_data_mind(config):
         pop_train, pop_test = build_pop_data(config)
         return user_history, entity_embedding, relation_embedding, entity_adj, relation_adj, news_feature, max_entity_freq, max_entity_pos, max_entity_type, pop_train, pop_test
     else:
-        #new
         print("task error, please check config")
