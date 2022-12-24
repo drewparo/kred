@@ -18,7 +18,7 @@ data:
   relation_index : "/datasets/mind_kg/realtion2id.txt"
   sparse_adj_entity : "/datasets/mind_kg/entity_adj.npy"
   sparse_adj_relation : "/datasets/mind_kg/relation_adj.npy"
-  mind_data : "/notebooks/data_saved.pkl"
+  mind_data : "/notebooks/data_dict_1671893708429.pkl"
 
 model:
   document_embedding_dim: 768
