@@ -3,6 +3,7 @@ from train_test import *
 from utils.util import *
 import pickle
 from parse_config import ConfigParser
+from scipy import sparse
 
 import os
 

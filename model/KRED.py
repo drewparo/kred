@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
-from News_embedding import News_embedding
-from User_modeling import User_modeling
+from model.News_embedding import News_embedding
+from model.User_modeling import User_modeling
 from utils.metrics import *
 
 class Softmax_BCELoss(nn.Module):
@@ -52,6 +52,7 @@ class KREDModel(nn.Module):
 
 
     def forward(self, user_features, news_features, task):
+
         if task == "item2item":
             user_embedding, top_indexs = self.news_embedding(user_features)
             candidate_news_embedding, topk_index = self.news_embedding(news_features)
