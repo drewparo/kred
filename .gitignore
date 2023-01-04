@@ -2,3 +2,4 @@ venv/
 .idea/
 *.pyc
 data_dict_1672848868384.pkl/
+datasets/
