@@ -1,24 +1,24 @@
 name: "KRED"
 n_gpu: 1
 data_loader:
-    batch_size: 128
+    batch_size: 256
     shuffle: true
     num_workers: 1
 
 data:
-  train_news : "/datasets/mind_train/news.tsv"
-  train_behavior : "/datasets/mind_train/behaviors.tsv"
-  valid_news : "/datasets/mind_val/news.tsv"
-  valid_behavior : "/datasets/mind_val/behaviors.tsv"
-  knowledge_graph : "/datasets/mind_kg/triple2id.txt"
-  entity_embedding : "/datasets/mind_kg/entity2vecd100.vec"
+  train_news : "./datasets/mind_train_demo/news.tsv"
+  train_behavior : "./datasets/mind_train_demo/behaviors.tsv"
+  valid_news : "./datasets/mind_val_demo/news.tsv"
+  valid_behavior : "./datasets/mind_val_demo/behaviors.tsv"
+  knowledge_graph : "./datasets/mind_utils_demo/triple2id.txt"
+  entity_embedding : "./datasets/mind_utils_demo/entity2vecd100.vec"
   num_entity_embedding: 3275150
-  relation_embedding : "/datasets/mind_kg/relation2vecd100.vec"
-  entity_index : "/datasets/mind_kg/entity2id.txt"
-  relation_index : "/datasets/mind_kg/realtion2id.txt"
-  sparse_adj_entity : "/datasets/mind_kg/entity_adj.npy"
-  sparse_adj_relation : "/datasets/mind_kg/relation_adj.npy"
-  mind_data : "/notebooks/data_dict_1671893708429.pkl"
+  relation_embedding : "./datasets/mind_utils_demo/relation2vecd100.vec"
+  entity_index : "./datasets/mind_utils_demo/entity2id.txt"
+  relation_index : "./datasets/mind_utils_demo/relation2id.txt"
+  sparse_adj_entity : "./datasets/mind_utils_demo/entity_adj.npy"
+  sparse_adj_relation : "./datasets/mind_utils_demo/relation_adj.npy"
+  mind_data : "./data_dict_1672848868384.pkl"
 
 model:
   document_embedding_dim: 768
@@ -33,7 +33,7 @@ model:
 trainer:
   training_type: "single_task" # single_task or multi-task
   task: "user2item" # task should be within: user2item, item2item, vert_classify, pop_predict
-  epochs: 20
+  epochs: 100
   smooth_lamda: 10
   train_neg_num: 4
   save_dir: "./out/saved/"
