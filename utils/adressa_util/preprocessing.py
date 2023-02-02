@@ -55,10 +55,12 @@ def write_news_files_full(news_title, nid2index, out_path, articles_content):
             article_content = articles_content[nid]
             category = article_content['category0']
             subcategory = article_content['category1'].split('|')[-1]
+            abstract = article_content['description']
+            url = article_content['url']
         except:
             continue
 
-        news_line = "\t".join([str(nindex), category, subcategory, title, "", "", "", ""]) + "\n"
+        news_line = "\t".join([str(nindex), category, subcategory, title, abstract, url, "", ""]) + "\n"
         news_lines.append(news_line)
 
     for stage in ["train", "valid", "test"]:
@@ -66,3 +68,7 @@ def write_news_files_full(news_title, nid2index, out_path, articles_content):
         file_path.mkdir(exist_ok=True, parents=True)
         with open(out_path / stage / "news.tsv", "w", encoding="utf-8") as f:
             f.writelines(news_lines)
+
+def print_fe(fef):
+    print(gesu)
+gesu = 0
