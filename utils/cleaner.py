@@ -8,8 +8,8 @@ def cleaner(config):
     entity2id_dict = entity_to_id(config, entities_news(config))
     if not os.path.exists("tmp"):
         os.makedirs("tmp")
-    with open(config["data"]["train_news"]) as old, open('tmp/train_' + config["data"]["train_news"].split('/')[-1],
-                                                         'w+') as new:
+    with open(config["data"]["train_news"], encoding='utf-8') as old, open('tmp/train_' + config["data"]["train_news"].split('/')[-1],
+                                                         'w+', encoding='utf-8') as new:
         for line in old:
             newsid, vert, subvert, title, abstract, url, entity_info_title, entity_info_abstract = line.strip().split(
                 '\t')
@@ -29,8 +29,8 @@ def cleaner(config):
             entity_info_abstract = json.dumps(entity_info_abstract)
             new_line = '\t'.join([newsid, vert, subvert, title, abstract, url, entity_info_title, entity_info_abstract])
             new.write(new_line + '\n')
-    with open(config["data"]["valid_news"]) as old, open('tmp/test_' + config["data"]["valid_news"].split('/')[-1],
-                                                         'w+') as new:
+    with open(config["data"]["valid_news"], encoding='utf-8') as old, open('tmp/test_' + config["data"]["valid_news"].split('/')[-1],
+                                                         'w+', encoding='utf-8') as new:
         for line in old:
             newsid, vert, subvert, title, abstract, url, entity_info_title, entity_info_abstract = line.strip().split(
                 '\t')

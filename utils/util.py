@@ -31,12 +31,37 @@ def load_from_pickle(filename):
         data = pickle.load(fp)
     return data
 
+def entities_jobs(config):
+    entities = set()
+    # Read entities from train jobs config["data"]["train_jobs"]=jobs.csv
+    with open(config["data"]["train_jobs"], encoding='utf-8') as fp:
+        for line in fp:
+            jobsid, cat, subcat, title, abstract, url, entity_info_title, entity_info_abstract = line.strip().split(
+                '\t')
+            # Add entities in the title
+            for entity in eval(entity_info_title):
+                entities.add(entity["WikidataId"])
+            # Add entities in the abstract
+            for entity in eval(entity_info_abstract):
+                entities.add(entity["WikidataId"])
+    # Read entities from valid news
+    with open(config["data"]["valid_news"], encoding='utf-8') as fp:
+        for line in fp:
+            newsid, vert, subvert, title, abstract, url, entity_info_title, entity_info_abstract = line.strip().split(
+                '\t')
+            # Add entities in the title
+            for entity in eval(entity_info_title):
+                entities.add(entity["WikidataId"])
+            # Add entities in the abstract
+            for entity in eval(entity_info_abstract):
+                entities.add(entity["WikidataId"])
+    return entities
 
 # Returns all the entities in the news dataset
 def entities_news(config):
     entities = set()
     # Read entities from train news
-    with open(config["data"]["train_news"]) as fp:
+    with open(config["data"]["train_news"],encoding='utf-8' ) as fp:
         for line in fp:
             newsid, vert, subvert, title, abstract, url, entity_info_title, entity_info_abstract = line.strip().split(
                 '\t')
@@ -47,7 +72,7 @@ def entities_news(config):
             for entity in eval(entity_info_abstract):
                 entities.add(entity["WikidataId"])
     # Read entities from valid news
-    with open(config["data"]["valid_news"]) as fp:
+    with open(config["data"]["valid_news"], encoding='utf-8') as fp:
         for line in fp:
             newsid, vert, subvert, title, abstract, url, entity_info_title, entity_info_abstract = line.strip().split(
                 '\t')
@@ -64,7 +89,7 @@ def entities_news(config):
 def entity_to_id(config, entities):
     entity2id_dict = {}
     # Get the association entity-id from the file
-    with open(config["data"]["entity_index"]) as fp:
+    with open(config["data"]["entity_index"], encoding='utf-8') as fp:
         entity_num = int(fp.readline().split('\n')[0])
         for line in fp:
             entity, entityid = line.strip().split('\t')
@@ -78,7 +103,7 @@ def entity_to_id(config, entities):
 def id_to_entity(config, ids):
     entity2id_dict = {}
     # Get the association entity-id from the file
-    with open(config["data"]["entity_index"]) as fp:
+    with open(config["data"]["entity_index"], encoding='utf-8') as fp:
         entity_num = int(fp.readline().split('\n')[0])
         for line in fp:
             entity, entityid = line.strip().split('\t')
