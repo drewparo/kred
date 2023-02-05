@@ -67,11 +67,11 @@ def get_extract(text, wikidata_ids):
                 if wikidata_id not in wikidata_ids:
                     wikidata_ids.append(wikidata_id)
                 wiki_h.append(wikidata_id)
-                wikidata_dict['Label'] = entity_name
-                wikidata_dict['WikidataId'] = wikidata_id
+                wikidata_dict["Label"] = entity_name
+                wikidata_dict["WikidataId"] = wikidata_id
                 for token in t:
                     if str(token) == entity_name: ##to modify
-                        wikidata_dict['OccurrenceOffsets'] = token.idx
+                        wikidata_dict["OccurrenceOffsets"] = token.idx
                         break
                 list_dict.append(wikidata_dict)
       del wiki_h

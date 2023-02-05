@@ -39,7 +39,7 @@ def entities_jobs(config):
     return entities
 
 # Return a dictionary from entity names to ids
-def entity_to_id(config, entities):
+def entity_to_id_jobs(config, entities):
     entity2id_dict = {}
     # Get the association entity-id from the file
     with open(config["jobs"]["entity_index"], encoding='utf-8') as fp:
@@ -53,7 +53,7 @@ def entity_to_id(config, entities):
 
 
 # Return a dictionary from entity ids to names
-def id_to_entity(config, ids):
+def id_to_entity_jobs(config, ids):
     entity2id_dict = {}
     # Get the association entity-id from the file
     with open(config["jobs"]["entity_index"], encoding='utf-8') as fp:
@@ -366,9 +366,9 @@ def get_user2item_data(config):
     return train_data, dev_data
 
 
-def build_user_history(config):
+def build_user_history_jobs(config):
     user_history_dict = {}
-    fp_train_behavior = open(config['data']['train_behavior'], 'r', encoding='utf-8')
+    fp_train_behavior = open(config['data']['train_behavior'], 'r', encoding='utf-8') ###
     for line in fp_train_behavior:
         index, user_id, imp_time, history, behavior = line.strip().split('\t')
         if len(history.split(' ')) >= config['model']['user_his_num']:
@@ -394,18 +394,18 @@ def build_user_history(config):
     return user_history_dict
 
 
-def build_news_features_mind(config, entity2embedding_dict, embedding_folder=None):
+def build_news_features_mind_jobs(config, entity2embedding_dict, embedding_folder=None):
     news_features = {}
 
     news_feature_dict = {}
-    fp_train_news = open(config['data']['train_news'], 'r', encoding='utf-8')
+    fp_train_news = open(config['jobs']['train_jobs'], 'r', encoding='utf-8')
     for line in fp_train_news:
-        newsid, vert, subvert, title, abstract, url, entity_info_title, entity_info_abstract = line.strip().split('\t')
+        newsid, vert, subvert, title, abstract, url, entity_info_title, entity_info_abstract = line.strip().split('\t') #####
         news_feature_dict[newsid] = (title + " " + abstract, entity_info_title, entity_info_abstract)
     # entityid, entity_freq, entity_position, entity_type
-    fp_dev_news = open(config['data']['valid_news'], 'r', encoding='utf-8')
+    fp_dev_news = open(config['jobs']['valid_jobs'], 'r', encoding='utf-8')
     for line in fp_dev_news:
-        newsid, vert, subvert, title, abstract, url, entity_info_title, entity_info_abstract = line.strip().split('\t')
+        newsid, vert, subvert, title, abstract, url, entity_info_title, entity_info_abstract = line.strip().split('\t')  #######
         news_feature_dict[newsid] = (title + " " + abstract, entity_info_title, entity_info_abstract)
 
     # deal with doc feature
@@ -413,8 +413,8 @@ def build_news_features_mind(config, entity2embedding_dict, embedding_folder=Non
     entity_type_index = 1
     # Load sentence embeddings from files if present
     if embedding_folder is not None:
-        sentences_embedding = load_from_pickle(embedding_folder + "train_news_embeddings")
-        sentences_embedding.extend(load_from_pickle(embedding_folder + "valid_news_embeddings"))
+        sentences_embedding = load_from_pickle(embedding_folder + "train_jobs_embeddings")
+        sentences_embedding.extend(load_from_pickle(embedding_folder + "valid_jobs_embeddings"))
     else:
         model = SentenceTransformer('all-mpnet-base-v2')
 
@@ -429,12 +429,12 @@ def build_news_features_mind(config, entity2embedding_dict, embedding_folder=Non
         abstract_entity_json = json.loads(news_feature_dict[news][2])
         news_entity_feature = {}
         for item in title_entity_json:
-            if item['Type'] not in entity_type_dict:
+            if item['Type'] not in entity_type_dict: #############
                 entity_type_dict[item['Type']] = entity_type_index
                 entity_type_index = entity_type_index + 1
             news_entity_feature[item['WikidataId']] = (len(item['OccurrenceOffsets']), 1, entity_type_dict[
                 item['Type']])  # entity_freq, entity_position, entity_type
-        for item in abstract_entity_json:
+        for item in abstract_entity_json: ###
             if item['WikidataId'] in news_entity_feature:
                 news_entity_feature[item['WikidataId']] = (
                 news_entity_feature[item['WikidataId']][0] + len(item['OccurrenceOffsets']), 1,
@@ -470,10 +470,10 @@ def build_news_features_mind(config, entity2embedding_dict, embedding_folder=Non
     return news_features, 100, 10, 100
 
 
-def construct_adj_mind(config, entity2id_dict, entity2embedding_dict):  # graph is triple
-    print('constructing adjacency matrix ...')
+def construct_adj_mind_jobs(config, entity2id_dict, entity2embedding_dict):  # graph is triple
+    print('constructing adjacency matrix jobs...')
     entities_ids = set(entity2id_dict.values())
-    with open(config['data']['knowledge_graph'], 'r', encoding='utf-8') as graph_file_fp:
+    with open(config['jobs']['knowledge_graph'], 'r', encoding='utf-8') as graph_file_fp:
         kg = {}
         for line in graph_file_fp:
             linesplit = line.split('\n')[0].split('\t')
@@ -510,30 +510,30 @@ def construct_adj_mind(config, entity2id_dict, entity2embedding_dict):  # graph 
             relation_adj[new_key].append(int(kg[key][i][1]))
     entity_adj = np.array(entity_adj)
     relation_adj = np.array(relation_adj)
-    print('construct_adj_mind finish')
+    print('construct_adj_mind jobs finish')
     return entity_adj, relation_adj
 
 
 # Load the emdedding of the entities in entity2id_dict, append them to entity_embedding and
 # update entity2embedding_dict
-def construct_embedding_mind(config, entity2id_dict, entity_embedding, entity2embedding_dict):
-    print('constructing embedding ...')
+def construct_embedding_jobs(config, entity2id_dict, entity_embedding, entity2embedding_dict):
+    print('constructing embedding jobs...')
     relation_embedding = []
     zero_array = np.zeros(config['model']['entity_embedding_dim'])
     relation_embedding.append(zero_array)
     id2entity_dict = {v: k for k, v in entity2id_dict.items()}
-    with open(config['data']['entity_embedding'], 'r', encoding='utf-8') as fp_entity_embedding:
+    with open(config['jobs']['entity_embedding'], 'r', encoding='utf-8') as fp_entity_embedding:
         i = 1
         for line in fp_entity_embedding:
             if i in id2entity_dict:
-                linesplit = line.strip().split('\t')
+                linesplit = line.strip().split(' ')
                 linesplit = [float(i) for i in linesplit]
                 entity2embedding_dict[id2entity_dict[i]] = len(entity_embedding)
                 entity_embedding.append(linesplit)
             i += 1
-    with open(config['data']['relation_embedding'], 'r', encoding='utf-8') as fp_relation_embedding:
+    with open(config['jobs']['relation_embedding'], 'r', encoding='utf-8') as fp_relation_embedding:
         for line in fp_relation_embedding:
-            linesplit = line.strip().split('\t')
+            linesplit = line.strip().split(' ')
             linesplit = [float(i) for i in linesplit]
             relation_embedding.append(linesplit)
     return entity2embedding_dict, entity_embedding, relation_embedding
@@ -776,10 +776,10 @@ def load_compressed_pickle(filename):
     return obj
 
 
-def load_pretrained_data_mind(config):
-    data_path = config['data']['mind_data']
+def load_pretrained_data_mind_jobs(config):
+    data_path = config['jobs']['mind_data']
     if data_path:
-        restored_data = load_compressed_pickle(config['data']['mind_data'])
+        restored_data = load_compressed_pickle(config['jobs']['mind_data'])
         user_history = restored_data["user_history"]
         entity_embedding = restored_data["entity_embedding"]
         relation_embedding = restored_data["relation_embedding"]
