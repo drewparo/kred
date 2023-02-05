@@ -31,41 +31,19 @@ def load_from_pickle(filename):
         data = pickle.load(fp)
     return data
 
-
-# Returns all the entities in the news dataset
-def entities_news(config):
+def entities_jobs(config):
     entities = set()
-    # Read entities from train news
-    with open(config["data"]["train_news"],encoding='utf-8' ) as fp:
-        for line in fp:
-            newsid, vert, subvert, title, abstract, url, entity_info_title, entity_info_abstract = line.strip().split(
-                '\t')
-            # Add entities in the title
-            for entity in eval(entity_info_title):
-                entities.add(entity["WikidataId"])
-            # Add entities in the abstract
-            for entity in eval(entity_info_abstract):
-                entities.add(entity["WikidataId"])
-    # Read entities from valid news
-    with open(config["data"]["valid_news"], encoding='utf-8') as fp:
-        for line in fp:
-            newsid, vert, subvert, title, abstract, url, entity_info_title, entity_info_abstract = line.strip().split(
-                '\t')
-            # Add entities in the title
-            for entity in eval(entity_info_title):
-                entities.add(entity["WikidataId"])
-            # Add entities in the abstract
-            for entity in eval(entity_info_abstract):
-                entities.add(entity["WikidataId"])
+    # Read entities from train jobs config["data"]["train_jobs"]=jobs.csv
+    with open(config['jobs']['wikidata_ids'], 'r', encoding='utf-8') as file:
+        entities = set(line.strip() for line in file)
     return entities
-
 
 # Return a dictionary from entity names to ids
 def entity_to_id(config, entities):
     entity2id_dict = {}
     # Get the association entity-id from the file
-    with open(config["data"]["entity_index"], encoding='utf-8') as fp:
-        entity_num = int(fp.readline().split('\n')[0])
+    with open(config["jobs"]["entity_index"], encoding='utf-8') as fp:
+        #entity_num = int(fp.readline().split('\n')[0])
         for line in fp:
             entity, entityid = line.strip().split('\t')
             if entity in entities:
@@ -78,8 +56,8 @@ def entity_to_id(config, entities):
 def id_to_entity(config, ids):
     entity2id_dict = {}
     # Get the association entity-id from the file
-    with open(config["data"]["entity_index"], encoding='utf-8') as fp:
-        entity_num = int(fp.readline().split('\n')[0])
+    with open(config["jobs"]["entity_index"], encoding='utf-8') as fp:
+        #entity_num = int(fp.readline().split('\n')[0])
         for line in fp:
             entity, entityid = line.strip().split('\t')
             # Since the entity ids are increased by one when reading from the file,
@@ -132,7 +110,7 @@ def prepare_device(n_gpu_use):
 
 
 def construct_adj(graph_file, entity2id_file, args):  # graph is triple
-    print('constructing adjacency matrix ...')
+    print('constructing adjacency matrix jobs ...')
     graph_file_fp = open(graph_file, 'r', encoding='utf-8')
     graph = []
     for line in graph_file_fp:

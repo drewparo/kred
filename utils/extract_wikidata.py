@@ -2,6 +2,8 @@ import requests
 import nltk
 import spacy
 import ast
+import pandas as pd
+import numpy as np
 from nltk.tokenize import sent_tokenize
 nlp = spacy.load("en_core_web_sm")
 nltk.download('averaged_perceptron_tagger')
@@ -68,7 +70,7 @@ def get_extract(text, wikidata_ids):
                 wikidata_dict['Label'] = entity_name
                 wikidata_dict['WikidataId'] = wikidata_id
                 for token in t:
-                    if str(token) == entity_name:
+                    if str(token) == entity_name: ##to modify
                         wikidata_dict['OccurrenceOffsets'] = token.idx
                         break
                 list_dict.append(wikidata_dict)

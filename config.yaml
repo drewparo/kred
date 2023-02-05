@@ -6,7 +6,7 @@ data_loader:
     num_workers: 1
 
 data:
-  train_news : "./datasets/mind_train_demo/news.tsv"
+  train_news : "./datasets/mind_train_demo/news.tsv" #26740
   train_behavior : "./datasets/mind_train_demo/behaviors.tsv"
   valid_news : "./datasets/mind_val_demo/news.tsv"
   valid_behavior : "./datasets/mind_val_demo/behaviors.tsv"
@@ -19,6 +19,22 @@ data:
   sparse_adj_entity : "./datasets/mind_utils_demo/entity_adj.npy"
   sparse_adj_relation : "./datasets/mind_utils_demo/relation_adj.npy"
   mind_data : "./data_dict_1672848868384.pkl"
+
+jobs:
+  train_jobs : "./datasets/LinkedIn-Tech-Job-Data/train_jobs.tsv"
+  #train_behavior : "./datasets/mind_train_demo/behaviors.tsv"
+  valid_jobs : "./datasets/LinkedIn-Tech-Job-Data/valid_jobs.tsv"
+  #valid_behavior : "./datasets/mind_val_demo/behaviors.tsv"
+  knowledge_graph : "./datasets/LinkedIn-Tech-Job-Data/triple2id_jobs.txt"
+  entity_embedding : "./datasets/LinkedIn-Tech-Job-Data/entity2vecd100_jobs.vec"
+  num_entity_embedding: 13358
+  wikidata_ids: "./datasets/LinkedIn-Tech-Job-Data/wikidata_ids.txt"
+  relation_embedding : "./datasets/LinkedIn-Tech-Job-Data/relation2vecd100_jobs.vec"
+  entity_index : "./datasets/LinkedIn-Tech-Job-Data/entity2id_jobs.txt"
+  relation_index : "./datasets/LinkedIn-Tech-Job-Data/relation2id_jobs.txt"
+  #sparse_adj_entity : "./datasets/LinkedIn-Tech-Job-Data/entity_adj.npy"
+  #sparse_adj_relation : "./datasets/LinkedIn-Tech-Job-Data/relation_adj.npy"
+  jobs_data : "./data_dict_1672848868384.pkl"
 
 model:
   document_embedding_dim: 768
