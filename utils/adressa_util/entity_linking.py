@@ -13,12 +13,14 @@ refined = Refined.from_pretrained(
 model = M2M100ForConditionalGeneration.from_pretrained("alirezamsh/small100")
 tokenizer = SMALL100Tokenizer.from_pretrained("alirezamsh/small100")
 tokenizer.tgt_lang = "en"
-# Remeber to cite https://huggingface.co/alirezamsh/small100
+
+
+# Remember to cite https://huggingface.co/alirezamsh/small100
 
 def spans_to_mind_format(results: Span):
     entity_list = []
     for entity in results:
-        if entity.predicted_entity.wikidata_entity_id == None:
+        if entity.predicted_entity.wikidata_entity_id is None:
             continue
             # An entity has been detected but does not have a wikidata page
         entity_list.append({
