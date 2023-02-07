@@ -6,9 +6,9 @@ data_loader:
     num_workers: 1
 
 data:
-  train_news : "./adressa/mind_format/train/news_no_eng_entities.tsv"
+  train_news : "./adressa/mind_format/train/news_no_eng_entities_c.tsv"
   train_behavior : "./adressa/mind_format/train/behaviors.tsv"
-  valid_news : "./adressa/mind_format/valid/news_no_eng_entities.tsv"
+  valid_news : "./adressa/mind_format/valid/news_no_eng_entities_c.tsv"
   valid_behavior : "./adressa/mind_format/valid/behaviors.tsv"
   knowledge_graph : "./adressa/kg/triple2id_jobs.txt"
   entity_embedding : "./adressa/kg/entity2vecd100.vec"
