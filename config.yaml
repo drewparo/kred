@@ -12,7 +12,7 @@ data:
   valid_behavior : "./adressa/mind_format/valid/behaviors.tsv"
   knowledge_graph : "./adressa/kg/triple2id_jobs.txt"
   entity_embedding : "./adressa/kg/entity2vecd100_jobs.vec"
-  num_entity_embedding: 4566
+  num_entity_embedding: 4567
   relation_embedding : "./adressa/kg/relation2vecd100_jobs.vec"
   entity_index : "./adressa/kg/entity2id_jobs.txt"
   relation_index : "./adressa/kg/relation2id_jobs.txt"
