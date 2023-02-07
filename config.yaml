@@ -18,7 +18,7 @@ data:
   relation_index : "./adressa/kg/relation2id_jobs.txt"
   sparse_adj_entity : ""
   sparse_adj_relation : ""
-  mind_data : "/notebooks/data_dict_1671893708429.pkl"
+  mind_data : ""
 
 model:
   document_embedding_dim: 768
