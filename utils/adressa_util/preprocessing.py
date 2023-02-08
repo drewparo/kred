@@ -7,15 +7,19 @@ import numpy as np
 from utils.adressa_util.UserInfo import UserInfo
 
 
-def news_title(adressa_path):
+def news_title(adressa_path, content_news):
+    article_present = set()
+    for file in os.scandir(content_news):
+        article_present.add(file.name)
+
     hash_title = {}
+
     for file in os.scandir(adressa_path):
         with open(file, "r") as f:
             for line in tqdm(f):
                 event_dict = json.loads(line.strip("\n"))
-                if "id" in event_dict and "title" in event_dict:
+                if "id" in event_dict and "title" in event_dict and event_dict['id'] in article_present:
                     hash_title[event_dict["id"]] = event_dict["title"]
-        # break  # Only one file
     hash2id = {k: v for k, v in zip(hash_title.keys(), range(1, len(hash_title) + 1))}
     return hash_title, hash2id
 
@@ -39,7 +43,7 @@ def write_news_files(news_title, nid2index, out_path):
         nindex = nid2index[nid]
         title = news_title[nid]
 
-        news_line = "\t".join([str(nindex), "", "", title, "", "", "", ""]) + "\n"
+        news_line = "\t".join(['N'+str(nindex), "", "", title, "", "", "", ""]) + "\n"
         news_lines.append(news_line)
 
     for stage in ["train", "valid", "test"]:
@@ -58,13 +62,23 @@ def write_news_files_full(news_title, nid2index, out_path, articles_content):
         try:
             article_content = articles_content[nid]
             category = article_content['category0']
-            subcategory = article_content['category1'].split('|')[-1]
-            abstract = article_content['description']
+            if 'category1' in article_content:
+                subcategory = article_content['category1'].split('|')[-1]
+            else:
+                subcategory = category
+            if 'description' in article_content:
+                abstract = article_content['description']
+            elif 'teaser' in article_content:
+                abstract = article_content['teaser'].replace('\t', ' ').replace('\n', ' ')
+            else:
+                abstract = title
             url = article_content['url']
-        except:
+        except Exception as e:
+            print(e)
+
             continue
 
-        news_line = "\t".join([str(nindex), category, subcategory, title, abstract, url, "", ""]) + "\n"
+        news_line = "\t".join(['N' + str(nindex), category, subcategory, title, abstract, url, "", ""]) + "\n"
         news_lines.append(news_line)
 
     for stage in ["train", "valid", "test"]:
@@ -97,7 +111,10 @@ def entities_news(news_path):
     return entities
 
 
-def process_users(adressa_path, nid2index):
+def process_users(adressa_path, nid2index, content_news):
+    article_present = set()
+    for file in os.scandir(content_news):
+        article_present.add(file.name)
     uid2index = {}
     user_info = defaultdict(UserInfo)
 
@@ -105,7 +122,7 @@ def process_users(adressa_path, nid2index):
         with open(file, "r") as f:
             for l in tqdm(f):
                 event_dict = json.loads(l.strip("\n"))
-                if "id" in event_dict and "title" in event_dict:
+                if "id" in event_dict and "title" in event_dict and event_dict['id'] in article_present:
                     nindex = nid2index[event_dict["id"]]
                     uid = event_dict["userId"]
 
@@ -130,7 +147,7 @@ def construct_behaviors(hash_title, uindex, click_news, train_news, test_news, n
     p[0] = 0
     p /= p.sum()
 
-    train_his_news = [str(i) for i in click_news.tolist()]
+    train_his_news = ['N'+str(i) for i in click_news.tolist()]
     train_his_line = " ".join(train_his_news)
     # Return trainline
     for nindex in train_news:
@@ -138,7 +155,7 @@ def construct_behaviors(hash_title, uindex, click_news, train_news, test_news, n
             len(hash_title) + 1, size=neg_num, replace=False, p=p
         ).tolist()
         cand_news = " ".join(
-            [f"{str(nindex)}-1"] + [f"{str(nindex)}-0" for nindex in neg_cand]
+            [f"N{str(nindex)}-1"] + [f"N{str(nindex)}-0" for nindex in neg_cand]
         )
 
         train_behavior_line = f"null\t{uindex}\tnull\t{train_his_line}\t{cand_news}\n"
