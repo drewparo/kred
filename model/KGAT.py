@@ -30,8 +30,8 @@ class KGAT(BaseModel):
             neighbor_relations.append([])
             for entity in entity_batch:
                 if type(entity) == int:
-                    entity_adj_list = self.adj_entity[entity].tolist()
-                    relation_adj_list = self.adj_relation[entity].tolist()
+                    entity_adj_list = self.adj_entity[entity]
+                    relation_adj_list = self.adj_relation[entity]
                     for index, (entity_i, relation_i) in enumerate(zip(entity_adj_list, relation_adj_list)):
                         if entity_i > number_of_entities:
                             entity_adj_list.pop(index)
@@ -46,8 +46,8 @@ class KGAT(BaseModel):
                     neighbor_entities[-1].append([])
                     neighbor_relations[-1].append([])
                     for entity_i in entity:
-                        entity_adj_list = self.adj_entity[entity_i].tolist()
-                        relation_adj_list = self.adj_relation[entity_i].tolist()
+                        entity_adj_list = self.adj_entity[entity_i]
+                        relation_adj_list = self.adj_relation[entity_i]
                         # Some entities that are present in neighbor_entities does not exist in the embedding
                         for index, (entity_i, relation_i) in enumerate(zip(entity_adj_list, relation_adj_list)):
                             if entity_i > number_of_entities:

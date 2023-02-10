@@ -531,8 +531,9 @@ def construct_adj_mind(config, entity2id_dict, entity2embedding_dict):  # graph 
             new_key = entity2embedding_dict[id2entity_dict[int(key)]]
             entity_adj[new_key].append(int(kg[key][i][0]))
             relation_adj[new_key].append(int(kg[key][i][1]))
-    entity_adj = np.array(entity_adj)
-    relation_adj = np.array(relation_adj)
+    #tmp
+    #entity_adj = np.array(entity_adj)
+    #relation_adj = np.array(relation_adj)
     print('construct_adj_mind finish')
     return entity_adj, relation_adj
 
