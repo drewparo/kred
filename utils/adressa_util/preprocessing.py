@@ -161,14 +161,14 @@ def construct_behaviors(hash_title, uindex, click_news, train_news, test_news, n
         train_behavior_line = f"null\t{uindex}\tnull\t{train_his_line}\t{cand_news}\n"
         train_lines.append(train_behavior_line)
 
-    test_his_news = [str(i) for i in click_news.tolist() + train_news.tolist()]
+    test_his_news = ['N'+str(i) for i in click_news.tolist() + train_news.tolist()]
     test_his_line = " ".join(test_his_news)
     for nindex in test_news:
         neg_cand = np.random.choice(
             len(hash_title) + 1, size=neg_num, replace=False, p=p
         ).tolist()
         cand_news = " ".join(
-            [f"{str(nindex)}-1"] + [f"{str(nindex)}-0" for nindex in neg_cand]
+            [f"N{str(nindex)}-1"] + [f"N{str(nindex)}-0" for nindex in neg_cand]
         )
 
         test_behavior_line = f"null\t{uindex}\tnull\t{test_his_line}\t{cand_news}\n"
