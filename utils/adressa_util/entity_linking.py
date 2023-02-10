@@ -5,14 +5,21 @@ from refined.data_types.base_types import Entity, Span
 import json
 from tqdm import tqdm
 import os
+import ctranslate2
+
 
 refined = Refined.from_pretrained(
-    model_name='wikipedia_model',
+    model_name='aida_model',
     entity_set="wikidata"
 )
-model = M2M100ForConditionalGeneration.from_pretrained("alirezamsh/small100")
+
+
+
+translator = ctranslate2.Translator("no_en_model")
 tokenizer = SMALL100Tokenizer.from_pretrained("alirezamsh/small100")
+tokenizer.src_lang = "no"
 tokenizer.tgt_lang = "en"
+
 
 
 # Remember to cite https://huggingface.co/alirezamsh/small100
@@ -33,11 +40,15 @@ def spans_to_mind_format(results: Span):
         })
     return entity_list
 
+def translate_no_en(text):
+    source = tokenizer.convert_ids_to_tokens(tokenizer.encode(text))
+    results = translator.translate_batch([source])
+    target = results[0].hypotheses[0]
+    return tokenizer.decode(tokenizer.convert_tokens_to_ids(target))
 
 def ned_no(text):
-    encoded_no_ = tokenizer(text, return_tensors="pt")
-    generated_tokens_ = model.generate(**encoded_no_)
-    en_text_ = tokenizer.batch_decode(generated_tokens_, skip_special_tokens=True)[0]
+
+    en_text_ = translate_no_en(text)
     list_entity = spans_to_mind_format(refined.process_text(en_text_))
     list_entity_json = json.dumps(list_entity)
     return list_entity_json
@@ -56,6 +67,7 @@ def getEncodedNews(file_path_new):
 
 
 def add_entities(out_path):
+    print('new')
     file_path_new = out_path / 'train' / 'news_new.tsv'
     global tokenizer, model, refined
     for stage in ["train"]:
@@ -74,3 +86,4 @@ def add_entities(out_path):
                     attributes[7] = abstract_ned
                     new_file.write("\t".join(attributes))
                     new_file.write('\n')
+    return file_path_new
