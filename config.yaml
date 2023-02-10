@@ -6,23 +6,23 @@ data_loader:
     num_workers: 1
 
 data:
-  train_news : "./adressa/mind_format/train/news_no_eng_entities_c.tsv"
+  train_news : "./adressa/mind_format/train/news_new.tsv"
   train_behavior : "./adressa/mind_format/train/behaviors.tsv"
-  valid_news : "./adressa/mind_format/valid/news_no_eng_entities_c.tsv"
+  valid_news : "./adressa/mind_format/valid/news_new.tsv"
   valid_behavior : "./adressa/mind_format/valid/behaviors.tsv"
-  knowledge_graph : "./adressa/kg/triple2id_jobs.txt"
-  entity_embedding : "./adressa/kg/entity2vecd100.vec"
-  num_entity_embedding: 4567
-  relation_embedding : "./adressa/kg/relation2vecd100.vec"
-  entity_index : "./adressa/kg/entity2id_jobs.txt"
-  relation_index : "./adressa/kg/relation2id_jobs.txt"
+  knowledge_graph : "./adressa/kg/triple2id.txt"
+  entity_embedding : "./adressa/kg/entity2vecd768.vec"
+  num_entity_embedding: 6132
+  relation_embedding : "./adressa/kg/relation2vecd768.vec"
+  entity_index : "./adressa/kg/entity2id.txt"
+  relation_index : "./adressa/kg/relation2id.txt"
   sparse_adj_entity : ""
   sparse_adj_relation : ""
   mind_data : ""
 
 model:
   document_embedding_dim: 768
-  embedding_dim: 100
+  embedding_dim: 768
   news_entity_num: 20
   entity_neighbor_num: 20
   entity_embedding_dim: 100
@@ -33,7 +33,7 @@ model:
 trainer:
   training_type: "single_task" # single_task or multi-task
   task: "user2item" # task should be within: user2item, item2item, vert_classify, pop_predict
-  epochs: 20
+  epochs: 5
   smooth_lamda: 10
   train_neg_num: 4
   save_dir: "./out/saved/"
