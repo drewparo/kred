@@ -25,7 +25,7 @@ model:
   embedding_dim: 768
   news_entity_num: 20
   entity_neighbor_num: 20
-  entity_embedding_dim: 100
+  entity_embedding_dim: 768
   layer_dim: 128
   user_his_num: 20
 
