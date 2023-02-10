@@ -438,7 +438,7 @@ def build_news_features_mind(config, entity2embedding_dict, embedding_folder=Non
         sentences_embedding = load_from_pickle(embedding_folder + "train_news_embeddings")
         sentences_embedding.extend(load_from_pickle(embedding_folder + "valid_news_embeddings"))
     else:
-        model = SentenceTransformer('all-mpnet-base-v2')
+        model = SentenceTransformer('NbAiLab/nb-sbert-base')
         #using https://huggingface.co/NbAiLab/nb-sbert-base
 
     for i, news in enumerate(news_feature_dict):
