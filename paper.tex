@@ -1,0 +1,179 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+
+
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\graphicspath{{images/}}
+
+
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+\usepackage{makecell}
+\usepackage{stfloats}
+\usepackage{kantlipsum}
+
+\usepackage{algorithm,caption}
+\algsetup{indent=2em}
+\renewcommand{\algorithmiccomment}{}
+
+
+\usepackage{array}
+\newcolumntype{P}[1]{>{\centering\arraybackslash}p{#1}}
+\renewcommand{\arraystretch}{1.5}
+
+\PassOptionsToPackage{hyphens}{url}\usepackage{hyperref}
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+\begin{document}
+
+\title{%
+  KRED: Knowledge-Aware Document Representation for News
+Recommendations \\
+  \large Adressa Dataset Exploration \\
+    Jobs Recommandation System}
+
+\author{\IEEEauthorblockN{Andrea Parolin}
+\IEEEauthorblockA{\textit{Politecnico di Torino} \\
+Torino, Italia \\
+s291462@studenti.polito.it}
+\and
+\IEEEauthorblockN{Jasmine Guglielmi}
+\IEEEauthorblockA{\textit{Politecnico di Torino} \\
+Torino, Italia \\
+s303105@studenti.polito.it}
+\and
+\IEEEauthorblockN{Lorenzo Melchionna}
+\IEEEauthorblockA{\textit{Politecnico di Torino} \\
+Torino, Italia \\
+s304651@studenti.polito.it}
+}
+
+\maketitle
+
+\section{Problem Statement}
+With the development of the Internet and Social networks, online news has increasingly become a source of information for users. Considering the abundance of articles to choose from for each day, recommendation systems become essential in order to provide user the best possible experience and to be able to extend their time spent on the website\cite{ijcai2018p529}.
+The objective of recommendation systems is to analyze user needs and preferences, process a vast amount of information, and present the most appropriate option to the user.
+News RecSys have some peculiarity with respect to other domains:
+\begin{itemize}
+    \item Timeliness: news per se is highly time-sensitive, about 90\% of news expires within just two days. The concept of latency is critical in this domain and must take into account factor such as popularity, trends, and a high magnitude of incoming stories.
+    \item  Relevant entities: identify the key message conveyed by the article to acquire the real interest of the user by considering the position, frequency, and relationships of the entities.
+\end{itemize}
+Regarding the latter point, a knowledge graph contains comprehensive external information about entities and constitutes a promising research direction.\\
+Liu Danyang et al. propose a Knowledge-Aware Representation Enhancement model for news Documents, which enhances the document vector by fusing it with knowledge entities to produce a  representation vector. The new document vector is used in various downstream tasks such as User-To-user, User-To-Item, Item-To-Item, category classification, and local news detection.
+To fully utilize knowledge information KRED exploits an entity representation layer that considers surrounding, a context embedding layer to encode contextual information such as position, category, and frequency, and an information distillation layer that aims to merge all entities into one fixed-length embedding vector using an attention mechanism.
+Due to the computation power required to process large datasets, a primary focus has been placed on User-To-Item RecSys however further experiments can be conducted on other applications. \\
+Proposed extensions on:
+\begin{itemize}
+    \item Adressa Exploration: The study implements a pipeline for processing news articles in Norwegian, by examining associated challenges. The SmartMedia Adressa Dataset\cite{gulla2017adressa} is utilized as data source. The primary focus of the research involves Name Entity Disambiguation, achieved through the implementation of the "ReFinED" \cite{ayoola-etal-2022-refined} architecture and additionally to replace the TransE method \cite{bordes2013translating} used in previous literature with a BERT-based approach.
+    \item Jobs recommendation system: The study aims to adapt the recommendation system to a different domain: Job Offers.
+    The authors developed a pipeline for processing tech job offers from LinkedIn an generate syntetic behaviors of users basing on answers to StackOverflow survey.
+    %datasources
+    %name entity disambiguation
+\end{itemize}
+
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=1\linewidth]{adressa_pipe.png}
+    \caption{Adressa Pipeline.}
+    \label{fig:adressa_pipe}
+\end{figure*}
+
+
+
+\section{Metodology}
+The use of a Knowledge-Aware Representation Enhancement model (KRED) as the main building block in this project is a key feature that sets it apart from other models. \\
+Unlike BERT, which does not consider knowledge entities in its representation of text, KRED takes into account these entities in order to provide a more comprehensive and complete understanding of the text being processed. \\
+The ability of KRED to incorporate knowledge entities allows it to perform better on recommendation tasks compared to other models like DKN, which only rely on a specific type of text encoding. \\
+This is especially important in the context of news and jobs offers, as they often contain references to people, places, events, and other entities that can provide important context and information. \\
+
+KRED aims to produce a Knowledge-Enhanced Document Vector starting from any Document Representation, which can be used in various applications, and this is achieved through 3 essential components:
+\paragraph{Entity Representation Layer}
+This layer aims to produce entity represntation embedding also the information of relations with other entities.\\
+This is achieved constructing a Knowledge graph represented as a collection of entity-relation-entity triples, and TransE is exploted to learn representations for each entity and relation.\\
+This representations together with the knowledge graoh are keeped fixed, and the Knowkedge Graph Attention Network (KGAT) is exploted to learn the final entity representation, incorporating also information about neighbors if each entity.
+
+
+\paragraph{Context Embedding Layer}
+Instead of sending the whole document to the model, is more efficient to extract entity information with respect to the document and embed it in its representation.\\
+3 different context-embedding feature are used to have an overall representation of the context:
+\begin{itemize}
+    \item Position encoding: where the entity appears
+    \item Frequency encoding: how frequent the entity appears
+    \item Category encoding: category to which the entity appears
+\end{itemize}
+The final representation is obtained performing an element-wise addition between the output of the previous layer and the 3 context-embedding vectors.
+
+\paragraph{Information Distillation Layer}
+An attentive mechanism is used to highlight the most important entities within an article, where the initial document vector is the query, and both key and value are entity representations coming from the previous layer.\\
+Summing up the attention-weighted entity representations and concatenating the result with the original document vector a fully connected feed-forward neural network, the final Knowledge-Aware document vector is obtained.
+\subsection{Extension - Adressa}
+Before starting with the processing of the dataset, we defined what are the essential features in the creation and adaptation: the main idea was to keep the structure of MIND as described in \ref{Mind-structure} , so as to modify the original architecture minimally.\\
+\subsubsection{News Articles} The dataset is structured as a click log, in which every click within the portal is recorded and saved. Each item clicked by a user is associated with a unique hash code to which an item corresponds.
+The hash code of all clicked articles is then extracted and mapped to the corresponding title, category, subcategory, link, and \textit{description} which does not perfectly match the abstract as in MIND but expands the title and gives a brief summary of it.
+At this point it is necessary to extract the entities present within the title and description.
+Given the lack of pre-trained Entity Linking to run the task directly in Norwegian, it was necessary to translate the text into English to achieve a higher hit rate.
+\paragraph{Machine Translation} SMaLL-100\cite{mohammadshahi-etal-2022-small} \cite{mohammadshahi-etal-2022-small}, a shallow multilingual machine translation model, was implemented to translate from Norwegian to English using limited resources. SMaLL-100's architecture consists of a 12-layer transformer encoder and a 3-layer decoder. The encoder makes use of the language codes, and the flat decoder has been designed to increase the speed of inference. The training was carried out using a balanced dataset that ensured uniform sampling across all language pairs, with an emphasis on maintaining performance for low-resource languages.
+The translated text is stored in a temporary variable and will only be used for Name Entity Disambiguation.
+\paragraph{Entity Linking} ReFinED is an entity linking (EL) system which links entity mentions in documents to their corresponding entities in Wikipedia or Wikidata.
+\subsection{Extension - Job Recommandation System}
+
+
+\section{Experiments}
+\subsection{Data description}
+
+\paragraph{MIND} \label{Mind-structure}
+KRED trained the model on MIcrosoft News Dataset \cite{wu-etal-2020-mind}, a large-scale dataset for news recommendation research, contains behaviours and news article coming from Microsoft News website.
+The dataset comprises approximately 160.000 english news articles and over 15 million impression logs created by 1 million users who clicked on at least five news articles within a six-week span from October 12th to November 22nd, 2019.
+Every news article contains rich textual content including:
+\begin{itemize}
+    \item Article ID
+    \item Category
+    \item Sub-category
+    \item Title
+    \item Abstract
+    \item Link
+    \item Entities in the title
+    \item Entities in the abstract
+\end{itemize}
+As cited in the original MIND paper the entities in the title and abstract were extracted using an \textit{"internal NER and entity linking tool"}. It is safe to assume that Azure's Cognitive Services Entities Linking tool (more information \cite{MicrosoftTextAnalyticsAPI}) is used since the entities within each article have the same format, namely:
+\begin{itemize}
+    \item Label: The entity name in the Wikidata knowledge graph
+    \item Type: The type of this entity in Wikidata
+    \item WikidataId: The entity ID in Wikidata
+    \item Confidence: The confidence of entity linking
+    \item OccurrenceOffsets: The character-level entity offset in the text of title or abstract
+    \item SurfaceForms: The raw entity names in the original text
+\end{itemize}
+Entities are encoded as 100-dimensional embeddings of the entities and relations learned from the subgraph (from WikiData Knowledge Graph) by TransE method.
+
+Each impression log contains information about a user's click events, non-click events (negative sampling), and prior news click history. Each user is anonymized by hashing personal information into an anonymous ID.
+\begin{itemize}
+    \item Impression ID: the ID of an impression.
+    \item User ID : the anonymous ID of a user.
+    \item Time: the impression time with format "MM/DD/YYYY HH:MM:SS AM/PM".
+    \item History: The news click history (ID list of clicked news) of this user before this impression.
+    \item Impressions: list of news displayed in this impression and user's click behaviors on them (1 for click and 0 for non-click).
+\end{itemize}
+
+To proceed with the experiments the Demo version of the dataset is used to construct the baseline, which is already split into train, test, and validation.
+
+\paragraph{Adressa}: the dataset is offered by Adresseavisen, which is a Norwegian news portal. It is structured as a click log data set with approximately 20 million page visits from a Norwegian news portal as well as a sub-sample with 2.7 million clicks.
+The datasets are event-based and include anonymized users with their clicked news logs. In addition to click logs, the dataset contains some contextual information about users, such as geographic location, active time (time spent reading an article), session limits, etc.
+
+The experiments were conducted using a one-week dataset, with the data divided according to the following specifications: the initial six days of history data were allocated for training, 20\% of the data from the final day for validation purposes, and the remaining 80\% for testing.
+As mentioned above: the objective is to obtain the same structure as MIND.
+
+
+\paragraph{Linked-In} [Aggiungere qui]
+\section{Conclusions}
+
+\bibliographystyle{ieeetr}
+\bibliography{citation}
+
+\end{document}
