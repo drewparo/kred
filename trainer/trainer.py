@@ -4,7 +4,7 @@ import torch
 from torch import nn, optim
 from utils.metrics import *
 from utils.pytorchtools import *
-from utils.util import *
+from utils.util_jobs import *
 from base.base_trainer import BaseTrainer
 from logger.logger import *
 

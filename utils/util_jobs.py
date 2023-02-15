@@ -17,37 +17,11 @@ from tqdm import tqdm
 import pickle
 
 
-# def escape_quote(string):
-#     result = []
-#     n = 0
-#     #print(string)
-#     while n < len(string):
-#         if n >=2 and string[n].isalnum() and (string[n-2] == ':' or string[n-1] == '{' or string[n+1] == ',' or string[n+1] == '}'):
-#             if (string[n-2] == ':' or string[n-1] == '{') and (string[n+1] == ',' or string[n+1] == '}'):
-#                 result.append('"')
-#                 result.append(string[n])
-#                 result.append('"')
-#             elif string[n-2] == ':' or string[n-1] == '{':
-#                 result.append('"')
-#                 result.append(string[n])
-#             else:
-#                 result.append(string[n])
-#                 result.append('"')
-#         else:
-#             if string[n] == "'" and \
-#                     (n == 0 or string[n - 1] != '\\') and \
-#                     (n == len(string) - 1 or string[n + 1] != "'") and \
-#                     not (string[n-1].isalnum() and string[n+1].isalnum()):
-#                 result.append('"')
-#             else:
-#                 result.append(string[n])
-#         n += 1
-#     return "".join(result)
-
 # Create file and save data using pickle
 def save_to_pickle(data, file_name):
     with open(file_name, "wb") as fp:
         pickle.dump(data, fp)
+
 
 
 # Load data from file using pickle
@@ -695,6 +669,13 @@ def load_data_mind_jobs(config, embedding_folder=None):
     # For each entity in the news, get the neighbours entities in the wikidata graph and their relations
     entity_adj, relation_adj = construct_adj_mind_jobs(config, entity2id_dict, entity2embedding_dict)
 
+    for index in range(len(entity_adj)):
+        if len(entity_adj[index]) == 0:
+            entity_adj[index] = [0 for i in range(config['model']['entity_neighbor_num'])]
+    for index in range(len(relation_adj)):
+        if len(relation_adj[index]) == 0:
+            relation_adj[index] = [0 for i in range(config['model']['entity_neighbor_num'])]
+
     # Some of the entities in the neighborhood are not part of the entities in the news, so after having identiefied them,
     # their embedding is added to the list and they are added to the dictionary of entity2embedding
     entities_not_embedded = set([item for items in entity_adj for item in items]).difference(
@@ -709,6 +690,8 @@ def load_data_mind_jobs(config, embedding_folder=None):
     entity2id_dict.update(entity2id_dict_not_embedded)
     # Invert the dictionary
     id2entity_dict = {v: k for k, v in entity2id_dict.items()}
+    id2entity_dict[0] = 'Q87'
+
     # The ids in entity_adj are the original ones, they need to be updated to the new ids given by entity2embedding_dict
     for i in range(1, len(entity_adj)):
         for j in range(0, len(entity_adj[i])):
@@ -751,6 +734,9 @@ def load_compressed_pickle(filename):
         obj = pickle.load(f)
     return obj
 
+def save_compressed_pickle(filename, obj):
+    with gzip.open(filename, 'wb') as f:
+        pickle.dump(obj, f)
 
 def load_pretrained_data_mind_jobs(config):
     data_path = config['jobs']['jobs_data']
@@ -787,3 +773,28 @@ def load_pretrained_data_mind_jobs(config):
     else:
         print(f"Data not found at {data_path}")
         return None
+
+def split_behaviors(filename):
+    with open(filename, 'r', encoding='utf-8') as csv_file:
+        # Load the data from the CSV file into a pandas DataFrame
+        df = pd.read_csv(csv_file, sep='\t')
+        df = df.drop(df.columns[:1], axis=1)
+
+        # Calculate the number of rows in the DataFrame
+        n = df.shape[0]
+
+        # Generate a random permutation of the indices
+        idx = np.random.permutation(n)
+
+        # Split the indices into training and validation sets
+        split = int(0.8 * n)
+        train_idx = idx[:split]
+        val_idx = idx[split:]
+
+        # Split the DataFrame into training and validation sets based on the indices
+        train_df = df.iloc[train_idx, :]
+        val_df = df.iloc[val_idx, :]
+
+        # Save the training and validation sets as CSV files
+        train_df.to_csv('datasets/LinkedIn-Tech-Job-Data/behaviors_train_jobs.tsv', sep='\t', index=False)
+        val_df.to_csv('datasets/LinkedIn-Tech-Job-Data/behaviors_valid_jobs.tsv', sep='\t', index=False)

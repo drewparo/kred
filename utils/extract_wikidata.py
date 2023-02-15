@@ -3,14 +3,13 @@ import nltk
 import spacy
 import ast
 import json
-import pandas as pd
-import numpy as np
 from nltk.tokenize import sent_tokenize, word_tokenize
 nlp = spacy.load("en_core_web_sm")
 nltk.download('averaged_perceptron_tagger')
 nltk.download('punkt')
 nltk.download('maxent_ne_chunker')
 nltk.download('words')
+
 def get_ner(text):
     sent = nltk.word_tokenize(text)
     entities = nltk.ne_chunk(nltk.pos_tag(sent))
@@ -19,9 +18,7 @@ def get_ner(text):
 def get_wikidata_id(entity):
     query = entity.split()
     query = "+".join(query)
-    print('query:', query)
     response = requests.get(f"https://www.wikidata.org/w/api.php?action=wbsearchentities&format=json&language=en&type=item&limit=1&search={query}")
-    print('response:',  response)
     if response.status_code == 200:
         response_json = response.json()
         if "search" in response_json and response_json["search"]:
@@ -60,13 +57,11 @@ def get_extract(text, wikidata_ids):
       keys = ["Label", "WikidataId", "OccurrenceOffsets", "Type"]
       wiki_h = []
       entities = get_ner(text)
-      print('entities:', entities)
       for entity in entities.subtrees():
           wikidata_dict = {}
           #print(entity.label())
           if entity.label() != 'S':
             entity_name = " ".join([i[0] for i in entity.leaves()])
-            print(entity_name)
             wikidata_id = get_wikidata_id(entity_name)
             if wikidata_id and wikidata_id not in wiki_h:
                 if wikidata_id not in wikidata_ids:
@@ -93,7 +88,6 @@ def get_extract(text, wikidata_ids):
 def get_ids(col_dict, wikidata_ids):
     for d in col_dict:
         row = ast.literal_eval(d)
-        #print(row)
         for i in row:
             if i['WikidataId'] not in wikidata_ids:
                 wikidata_ids.append(i['WikidataId'])

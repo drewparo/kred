@@ -1,34 +1,94 @@
-import argparse
-from train_test import *
-from utils.util import *
-import pickle
-from parse_config import ConfigParser
-from scipy import sparse
+from utils.jobs_processing import *
+from utils.user_processing import *
+from utils.util_jobs import *
 
-import os
+# Read LinkedIn dataset
+df_jobs = pd.read_csv('/datasets/LinkedIn-Tech-Job-Data/jobs.csv')
+records = df_jobs.to_dict(orient='records')
+jobs_info = ['post_id', 'industries', 'job_function', 'title', 'abstract', 'post_url', 'entity_info_title',
+                 'entity_info_abstract']
+# Generate jobs dataset for KRED
+wikidata_ids = create_jobs_dataset(records, jobs_info)
 
-def main(config):
-    #data = load_data_mind(config)
-    with open("./data/data_mind_small.pkl", 'rb') as f:
-        data = pickle.load(f)
-    if config['trainer']['training_type'] == "single_task":
-        single_task_training(config, data)
-    else:
-        multi_task_training(config, data)
+# Define model for sentence embeddings
+model = SentenceTransformer('all-mpnet-base-v2').to('cuda:0')
 
-    test_data = data[-1]
-    testing(test_data, config)
+# Extract entity embeddings and descriptions
+entity_embeddings, entity_descriptions = extract_entity_embeddings_descriptions(wikidata_ids,model)
 
+# Reduce the embeddings size
+reduced_entity_embeddings = reduce_embeddings_size(entity_embeddings)
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='KRED')
+# Save entity embeddings file
+np.savetxt('datasets/LinkedIn-Tech-Job-Data/entity2vecd100_jobs.vec', reduced_entity_embeddings, fmt='%.6f', delimiter='\t')
 
-    parser.add_argument('-c', '--config', default="./config.json", type=str,
-                      help='config file path (default: None)')
-    parser.add_argument('-r', '--resume', default=None, type=str,
-                      help='path to latest checkpoint (default: None)')
-    parser.add_argument('-d', '--device', default=None, type=str,
-                      help='indices of GPUs to enable (default: all)')
+# Update jobs removing not embedded entities
+df_jobs = update_jobs_dataset(df_jobs,entity_descriptions)
 
-    config = ConfigParser.from_args(parser)
-    main(config)
+# List oh embedded entities
+entities = list(entity_descriptions.keys())
+
+# Create entity-to-id dictionary
+entity2id_dict = create_x2id_dict(entities)
+
+# Save entity2id file
+with open('datasets/LinkedIn-Tech-Job-Data/entity2id_jobs.txt', 'w', newline='') as file:
+    writer = csv.writer(file, delimiter='\t')
+    for key, value in entity2id_dict.items():
+        writer.writerow([key, value])
+        writer.writerow([key, value])
+
+# Extract relationships between entities
+relationships = extract_relationships(entities)
+
+# Extract unique relations
+relations = list(set([rel[1] for rel in relationships]))
+
+# Extract relation embeddings and relations
+relations_embeddings, relations_descriptions = extract_relation_embeddings_descriptions(relations,model) ####
+
+# Reduce the embeddings size
+reduced_embeddings_relations = reduce_embeddings_size(relations_embeddings)
+
+# Save relation embedding file
+np.savetxt('datasets/LinkedIn-Tech-Job-Data/relation2vecd100_jobs.vec', reduced_embeddings_relations, fmt='%.6f', delimiter='\t')
+
+# Create relation to id 
+relation2id_dict = create_x2id_dict(list(relations_descriptions.keys()))
+
+# Save relation2id file
+with open('datasets/LinkedIn-Tech-Job-Data/relation2id_jobs.txt', 'w', newline='') as file:
+    writer = csv.writer(file, delimiter='\t')
+    for key, value in relation2id_dict.items():
+        writer.writerow([key, value])
+        writer.writerow([key, value])
+
+# Generate entity-entity-relation triples
+triple2id = get_triple2id(relationships,entity2id_dict,relation2id_dict)
+
+# Save triple to id file
+with open('datasets/LinkedIn-Tech-Job-Data/triple2id_jobs.txt', 'w', newline='') as file:
+    writer = csv.writer(file, delimiter='\t')
+    for tuple_ in triple2id:
+        writer.writerow(tuple_)
+
+# Update jobs extracting entities per job and removing unuseful columns
+df_jobs = modify_df_jobs(df_jobs)
+
+#From stackoverflow survey, extract wikidata_ids
+
+user_info = ["User", "Entities"]
+df = pd.read_csv('datasets/LinkedIn-Tech-Job-Data/clean_stackoverflow_survey.csv')
+
+# Generate csv for user, entities in survey
+fix_survey(df, user_info)
+
+df_users = pd.read_csv('/datasets/LinkedIn-Tech-Job-Data/user_entities_stackoverflow.csv')
+
+# Generate history and behaviors gpr
+df_users = generate_history_behaviors(df_users, df_jobs)
+
+df_users.to_csv("datasets/LinkedIn-Tech-Job-Data/behaviors_jobs.tsv", sep='\t')
+
+#  Split behaviors in train and validation
+split_behaviors('datasets/LinkedIn-Tech-Job-Data/behaviors_jobs.tsv')

@@ -1,6 +1,7 @@
 import numpy as np
 import ast
-
+import csv
+from utils import extract_wikidata
 def modify_df_jobs(df_jobs):
     new_col = []
     for r in df_jobs['entity_info_title']:
@@ -17,10 +18,33 @@ def softmax(x):
     exp_x = np.exp(x)
     return exp_x / np.sum(exp_x, axis=0)
 
-def generate_history_behaviors(df_users,df_jobs,p):
+def fix_survey(df, user_info):
+    with open('datasets/LinkedIn-Tech-Job-Data/user_entities_stackoverflow.csv', 'w', encoding='utf-8',
+              newline='') as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=user_info)
+        writer.writeheader()
+        djob = {}
+        for i, job in zip(range(0, 10001), df):  # truncated to 10000
+            wikidata_ids = []
+            djob["User"] = "U" + str(i)
+            language = extract_wikidata.get_extract(df.Language[i], wikidata_ids)
+            database = extract_wikidata.get_extract(df.Database[i], wikidata_ids)
+            platform = extract_wikidata.get_extract(df.Platform[i], wikidata_ids)
+            webframe = extract_wikidata.get_extract(df.Webframe[i], wikidata_ids)
+            misctech = extract_wikidata.get_extract(df.MiscTech[i], wikidata_ids)
+            toolstech = extract_wikidata.get_extract(df.ToolsTech[i], wikidata_ids)
+            opsys = extract_wikidata.get_extract(df.OpSys[i], wikidata_ids)
+            # Save the couple U0, ['Q123', 'Q456', ... ]
+            djob["Entities"] = wikidata_ids
+            # Write the file in order to save them once for all
+            writer.writerow(djob)
+
+
+def generate_history_behaviors(df_users,df_jobs):
+    p = 0.75
     clicks_col = []
     behaviors_col = []
-    for user_entities in df_users['entities']:
+    for user_entities in df_users['Entities']:
         feasible_jobs = [] 
         clicks = []
         behaviors = []
@@ -66,5 +90,5 @@ def generate_history_behaviors(df_users,df_jobs,p):
     df_users['Histories'] = clicks_str
     df_users['Behaviors'] = behaviors_str
 
-    df_users = df_users[['user','Histories','Behaviors']]
+    df_users = df_users[['User','Histories','Behaviors']]
     return df_users

@@ -6,7 +6,7 @@ from trainer.trainer import Trainer
 from base.base_data_loader import *
 from torch.utils.data import Dataset, DataLoader, RandomSampler
 from utils.metrics import *
-from utils.util import *
+from utils.util_jobs import *
 
 class NewsDataset(Dataset):
     def __init__(self, dic_data, transform=None):

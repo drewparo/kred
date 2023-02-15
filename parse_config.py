@@ -5,7 +5,7 @@ from functools import reduce, partial
 from operator import getitem
 from datetime import datetime
 from logger.logger import setup_logging
-from utils.util import read_json, write_json
+from utils.util_jobs import read_json, write_json
 import yaml
 
 

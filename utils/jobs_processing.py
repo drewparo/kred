@@ -2,22 +2,32 @@ import ast
 from sklearn.decomposition import PCA
 import requests
 from operator import itemgetter
-import extract_wikidata
+from utils import extract_wikidata
+import csv
 
 # Function to create Job dataset
-def create_jobs_dataset(records):
+def create_jobs_dataset(records, jobs_info):
     djob = {}
     wikidata_ids = []
-    for job in records: ###
-        djob["post_id"] = job['post_id']
-        djob["industries"] = job['Industries']
-        djob["job_function"] = job['Job function']
-        djob["title"] = job['title']
-        djob["abstract"] = extract_wikidata.extract_significant_sentences(job['description']) ##
-        djob["post_url"] = job['post_url']
-        djob["entity_info_title"] = extract_wikidata.get_extract(job['description'], wikidata_ids)
-        djob["entity_info_abstract"] = [] 
-    return djob, wikidata_ids
+    with open('datasets/LinkedIn-Tech-Job-Data/jobs.csv', 'a', encoding='utf-8', newline='') as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=jobs_info)
+        for job in records:
+            djob["post_id"] = job['post_id']
+            djob["industries"] = job['Industries']
+            djob["job_function"] = job['Job function']
+            djob["title"] = job['title']
+            djob["abstract"] = extract_wikidata.extract_significant_sentences(job['description']) ##
+            djob["post_url"] = job['post_url']
+            djob["entity_info_title"] = extract_wikidata.get_extract(job['description'], wikidata_ids)
+            djob["entity_info_abstract"] = []
+            writer.writerow(djob)
+
+    # Creation file with all uniques wikidata_ids
+    file = open('datasets/LinkedIn-Tech-Job-Data/wikidata_ids.txt', 'w', encoding='utf-8')
+    for wikidata in wikidata_ids:
+        file.write(wikidata + "\n")
+    file.close()
+    return wikidata_ids
 
 # Function to get entity description
 def get_description(id):
@@ -71,6 +81,17 @@ def extract_entity_embeddings_descriptions(entity_ids,model):
             entities_descriptions[entity_id] = entity_description
     return entities_embeddings, entities_descriptions
 
+# Extract relation embeddings and descriptions
+def extract_relation_embeddings_descriptions(relation_ids,model):
+    relation_embeddings = []
+    relation_descs = []
+    for relation_id in relation_ids:
+        rela_d, emb_ = extract_embeddings_relation(relation_id, model)
+        if not emb_ is None:
+            relation_embeddings.append(emb_)
+            relation_descs.append(rela_d)
+    return relation_embeddings, relation_descs
+
 # Function to reduce the size of the embeddings
 def reduce_embeddings_size(embeddings):
     pca = PCA(n_components=100)
@@ -85,7 +106,6 @@ def update_jobs_dataset(df_jobs,descripriptions):
         new_entities = []
         for e in entities:
             entity = ast.literal_eval(e)
-            #print(entity['WikidataId'])
             if entity['WikidataId'] in entities_good:
                 entity['OccurrenceOffsets'] = [entity['OccurrenceOffsets']]
                 new_entities.append(entity)
