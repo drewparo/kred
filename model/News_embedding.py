@@ -78,6 +78,7 @@ class News_embedding(nn.Module):
                 entities.append(self.doc_feature_dict[news][0])
             else:
                 entities.append([])
+                #print(self.doc_feature_dict)
                 for news_i in news:
                     entities[-1].append(self.doc_feature_dict[news_i][0])
         return entities
@@ -127,6 +128,14 @@ class News_embedding(nn.Module):
         return context_vectors
 
     def get_entity_num_embedding(self, entity_nums):
+        # max_seq_len = 20
+        # entity_nums = torch.tensor(entity_nums).cuda()
+        # seq_len = entity_nums.shape[1]
+        # if seq_len < max_seq_len:
+        #     padding = torch.zeros((entity_nums.shape[0], max_seq_len - seq_len)).cuda()
+        #     entity_nums = torch.cat((entity_nums, padding), dim=1)
+        # elif seq_len > max_seq_len:
+        #     entity_nums = entity_nums[:, :max_seq_len]
         entity_num_embedding = self.entity_num_embeddings(torch.tensor(entity_nums).cuda())
 
         return entity_num_embedding
@@ -142,14 +151,21 @@ class News_embedding(nn.Module):
 
 
     def forward(self, news_id):
+        #print('*' * 100)
+        #print(news_id)
+        #print('*' * 100)
         entities = self.get_entities_ids(news_id)
+        #print(entities)
+        #print('*' * 100)
         entity_nums = self.get_entities_nums(news_id)
+        #print(entity_nums)
+        #print('*' * 100)
         istitle = self.get_position(news_id)
         type_ = self.get_type(news_id)
         context_vecs = self.get_context_vector(news_id)
         context_vecs = torch.FloatTensor(np.array(context_vecs)).cuda()
 
-        entity_num_embedding = self.get_entity_num_embedding(entity_nums)
+        entity_num_embedding = self.get_entity_num_embedding(entity_nums) ##########
         istitle_embedding = self.get_title_embedding(istitle)
         type_embedding = self.get_type_embedding(type_)
 

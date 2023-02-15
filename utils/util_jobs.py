@@ -1,23 +1,48 @@
 import gzip
 import json
+import pandas as pd
 import torch
 import random
 import numpy as np
-import math
 import os
 from pathlib import Path
 from itertools import repeat
 from collections import OrderedDict
-
 from IPython.core.display_functions import clear_output
 from sentence_transformers import SentenceTransformer
 import requests
 import math
 import zipfile
-# from logger.logger import *
 from tqdm import tqdm
 import pickle
 
+
+# def escape_quote(string):
+#     result = []
+#     n = 0
+#     #print(string)
+#     while n < len(string):
+#         if n >=2 and string[n].isalnum() and (string[n-2] == ':' or string[n-1] == '{' or string[n+1] == ',' or string[n+1] == '}'):
+#             if (string[n-2] == ':' or string[n-1] == '{') and (string[n+1] == ',' or string[n+1] == '}'):
+#                 result.append('"')
+#                 result.append(string[n])
+#                 result.append('"')
+#             elif string[n-2] == ':' or string[n-1] == '{':
+#                 result.append('"')
+#                 result.append(string[n])
+#             else:
+#                 result.append(string[n])
+#                 result.append('"')
+#         else:
+#             if string[n] == "'" and \
+#                     (n == 0 or string[n - 1] != '\\') and \
+#                     (n == len(string) - 1 or string[n + 1] != "'") and \
+#                     not (string[n-1].isalnum() and string[n+1].isalnum()):
+#                 result.append('"')
+#             else:
+#                 result.append(string[n])
+#         n += 1
+#     return "".join(result)
 
 # Create file and save data using pickle
 def save_to_pickle(data, file_name):
@@ -247,68 +272,16 @@ def unzip_file(zip_src, dst_dir, clean_zip_file=True):
         os.remove(zip_src)
 
 
-def get_mind_data_set(type):
-    """ Get MIND dataset address
-
-    Args:
-        type (str): type of mind dataset, must be in ['large', 'small', 'demo']
-
-    Returns:
-        list: data url and train valid dataset name
-    """
-    assert type in ["large", "small"]
-
-    if type == "large":
-        return (
-            "https://mind201910small.blob.core.windows.net/release/",
-            "MINDlarge_train.zip",
-            "MINDlarge_dev.zip",
-            "MINDlarge_utils.zip",
-        )
-
-    elif type == "small":
-        return (
-            "https://mind201910small.blob.core.windows.net/release/",
-            "MINDsmall_train.zip",
-            "MINDsmall_dev.zip",
-            "MINDsma_utils.zip",
-        )
-
-    elif type == "demo":
-        return (
-            "https://recodatasets.blob.core.windows.net/newsrec/",
-            "MINDdemo_train.zip",
-            "MINDdemo_dev.zip",
-            "MINDdemo_utils.zip",
-        )
-
-
-def download_deeprec_resources(azure_container_url, data_path, remote_resource_name):
-    """Download resources.
-
-    Args:
-        azure_container_url (str): URL of Azure container.
-        data_path (str): Path to download the resources.
-        remote_resource_name (str): Name of the resource.
-    """
-    os.makedirs(data_path, exist_ok=True)
-    remote_path = azure_container_url + remote_resource_name
-    maybe_download(remote_path, remote_resource_name, data_path)
-    zip_ref = zipfile.ZipFile(os.path.join(data_path, remote_resource_name), "r")
-    zip_ref.extractall(data_path)
-    zip_ref.close()
-    os.remove(os.path.join(data_path, remote_resource_name))
-
-
-def get_user2item_data(config):
+def get_user2item_data_jobs(config):
     negative_num = config['trainer']['train_neg_num']
     train_data = {}
     user_id = []
     news_id = []
     label = []
-    fp_train = open(config['data']['train_behavior'], 'r', encoding='utf-8')
+    fp_train = open(config['jobs']['train_behavior'], 'r', encoding='utf-8')
+    next(fp_train)
     for line in fp_train:
-        index, userid, imp_time, history, behavior = line.strip().split('\t')
+        userid, history, behavior = line.strip().split('\t')
         behavior = behavior.split(' ')
         positive_list = []
         negative_list = []
@@ -343,9 +316,11 @@ def get_user2item_data(config):
     user_id = []
     news_id = []
     label = []
-    fp_dev = open(config['data']['valid_behavior'], 'r', encoding='utf-8')
-    for line in fp_dev:
-        index, userid, imp_time, history, behavior = line.strip().split('\t')
+    fp_dev = open(config['jobs']['valid_behavior'], 'r', encoding='utf-8')
+    next(fp_dev)
+
+    for index, line in enumerate(fp_dev):
+        userid, history, behavior = line.strip().split('\t')
         behavior = behavior.split(' ')
         for news in behavior:
             newsid, news_label = news.split('-')
@@ -365,12 +340,11 @@ def get_user2item_data(config):
 
     return train_data, dev_data
 
-
 def build_user_history_jobs(config):
     user_history_dict = {}
-    fp_train_behavior = open(config['data']['train_behavior'], 'r', encoding='utf-8') ###
+    fp_train_behavior = open(config['jobs']['train_behavior'], 'r', encoding='utf-8')
     for line in fp_train_behavior:
-        index, user_id, imp_time, history, behavior = line.strip().split('\t')
+        user_id, history, behavior = line.strip().split('\t')
         if len(history.split(' ')) >= config['model']['user_his_num']:
             user_history_dict[user_id + "_train"] = history.split(' ')[:config['model']['user_his_num']]
         else:
@@ -380,9 +354,9 @@ def build_user_history_jobs(config):
             if user_history_dict[user_id + "_train"][0] == '':
                 user_history_dict[user_id + "_train"][0] = 'N0'
 
-    fp_dev_behavior = open(config['data']['valid_behavior'], 'r', encoding='utf-8')
+    fp_dev_behavior = open(config['jobs']['valid_behavior'], 'r', encoding='utf-8')
     for line in fp_dev_behavior:
-        index, user_id, imp_time, history, behavior = line.strip().split('\t')
+        user_id, history, behavior = line.strip().split('\t')
         if len(history.split(' ')) >= config['model']['user_his_num']:
             user_history_dict[user_id + "_dev"] = history.split(' ')[:config['model']['user_his_num']]
         else:
@@ -393,22 +367,32 @@ def build_user_history_jobs(config):
                 user_history_dict[user_id + "_dev"][0] = 'N0'
     return user_history_dict
 
-
 def build_news_features_mind_jobs(config, entity2embedding_dict, embedding_folder=None):
-    news_features = {}
+    jobs_features = {}
 
-    news_feature_dict = {}
-    fp_train_news = open(config['jobs']['train_jobs'], 'r', encoding='utf-8')
-    for line in fp_train_news:
-        newsid, vert, subvert, title, abstract, url, entity_info_title, entity_info_abstract = line.strip().split('\t') #####
-        news_feature_dict[newsid] = (title + " " + abstract, entity_info_title, entity_info_abstract)
-    # entityid, entity_freq, entity_position, entity_type
-    fp_dev_news = open(config['jobs']['valid_jobs'], 'r', encoding='utf-8')
-    for line in fp_dev_news:
-        newsid, vert, subvert, title, abstract, url, entity_info_title, entity_info_abstract = line.strip().split('\t')  #######
-        news_feature_dict[newsid] = (title + " " + abstract, entity_info_title, entity_info_abstract)
+    jobs_feature_dict = {}
+    fp_train_jobs = open(config['jobs']['train_jobs'], 'r', encoding='utf-8')
+    df = pd.read_csv(fp_train_jobs, sep='\t')
+    df.replace(np.nan,0)
+    for index, row in df.iterrows():
+        jobsid = row['post_id']
+        title = row['title']
+        abstract = str(row['abstract'])
+        entity_info_title = eval(row['entity_info_title'])
+        entity_info_abstract = []
+        jobs_feature_dict[jobsid] = (title + " " + abstract, entity_info_title, entity_info_abstract)
 
-    # deal with doc feature
+    fp_dev_jobs = open(config['jobs']['valid_jobs'], 'r', encoding='utf-8')
+    df = pd.read_csv(fp_dev_jobs, sep='\t')
+    df.replace(np.nan, 0)
+    for index, row in df.iterrows():
+        jobsid = row['post_id']
+        title = row['title']
+        abstract = str(row['abstract'])
+        entity_info_title = eval(row['entity_info_title'])
+        entity_info_abstract = []
+        jobs_feature_dict[jobsid] = (title + " " + abstract, entity_info_title, entity_info_abstract)
+
     entity_type_dict = {}
     entity_type_index = 1
     # Load sentence embeddings from files if present
@@ -418,60 +402,49 @@ def build_news_features_mind_jobs(config, entity2embedding_dict, embedding_folde
     else:
         model = SentenceTransformer('all-mpnet-base-v2')
 
-    for i, news in enumerate(news_feature_dict):
+    for i, jobs in enumerate(jobs_feature_dict):
         if embedding_folder is not None:
             sentence_embedding = sentences_embedding[i]
         else:
-            sentence_embedding = model.encode(news_feature_dict[news][0])
+            sentence_embedding = model.encode(jobs_feature_dict[jobs][0])
             clear_output()
-        news_entity_feature_list = []
-        title_entity_json = json.loads(news_feature_dict[news][1])
-        abstract_entity_json = json.loads(news_feature_dict[news][2])
-        news_entity_feature = {}
-        for item in title_entity_json:
-            if item['Type'] not in entity_type_dict: #############
+        jobs_entity_feature_list = []
+        title_entity_json = json.dumps(jobs_feature_dict[jobs][1])
+        jobs_entity_feature = {}
+        for item in json.loads(title_entity_json):
+            if item['Type'] not in entity_type_dict:
                 entity_type_dict[item['Type']] = entity_type_index
                 entity_type_index = entity_type_index + 1
-            news_entity_feature[item['WikidataId']] = (len(item['OccurrenceOffsets']), 1, entity_type_dict[
-                item['Type']])  # entity_freq, entity_position, entity_type
-        for item in abstract_entity_json: ###
-            if item['WikidataId'] in news_entity_feature:
-                news_entity_feature[item['WikidataId']] = (
-                news_entity_feature[item['WikidataId']][0] + len(item['OccurrenceOffsets']), 1,
-                entity_type_dict[item['Type']])
-            else:
-                if item['Type'] not in entity_type_dict:
-                    entity_type_dict[item['Type']] = entity_type_index
-                    entity_type_index = entity_type_index + 1
-                news_entity_feature[item['WikidataId']] = (len(item['OccurrenceOffsets']), 2, entity_type_dict[
-                    item['Type']])  # entity_freq, entity_position, entity_type
-        for entity in news_entity_feature:
+            occ_off = [item['OccurrenceOffsets']]
+            jobs_entity_feature[item['WikidataId']] = (len(occ_off), 1, entity_type_dict[
+                item['Type']])
+        for entity in jobs_entity_feature:
             if entity in entity2embedding_dict:
-                news_entity_feature_list.append(
-                    [entity2embedding_dict[entity], news_entity_feature[entity][0], news_entity_feature[entity][1],
-                     news_entity_feature[entity][2]])
-        news_entity_feature_list.append([0, 0, 0, 0])
-        if len(news_entity_feature_list) > config['model']['news_entity_num']:
-            news_entity_feature_list = news_entity_feature_list[:config['model']['news_entity_num']]
+                jobs_entity_feature_list.append(
+                    [entity2embedding_dict[entity], jobs_entity_feature[entity][0], jobs_entity_feature[entity][1],
+                     jobs_entity_feature[entity][2]])
+        jobs_entity_feature_list.append([0, 0, 0, 0])
+        if len(jobs_entity_feature_list) > config['model']['news_entity_num']:
+            jobs_entity_feature_list = jobs_entity_feature_list[:config['model']['news_entity_num']]
         else:
-            for i in range(len(news_entity_feature_list), config['model']['news_entity_num']):
-                news_entity_feature_list.append([0, 0, 0, 0])
-        news_feature_list_ins = [[], [], [], [], []]
-        for i in range(len(news_entity_feature_list)):
+            for i in range(len(jobs_entity_feature_list), config['model']['news_entity_num']):
+                jobs_entity_feature_list.append([0, 0, 0, 0])
+        jobs_feature_list_ins = [[], [], [], [], []]
+        for i in range(len(jobs_entity_feature_list)):
             for j in range(4):
-                news_feature_list_ins[j].append(news_entity_feature_list[i][j])
-        news_feature_list_ins[4] = sentence_embedding
-        news_features[news] = news_feature_list_ins
-    news_features["N0"] = [[], [], [], [], []]
+                jobs_feature_list_ins[j].append(jobs_entity_feature_list[i][j])
+        jobs_feature_list_ins[4] = sentence_embedding
+        jobs_features[jobs] = jobs_feature_list_ins
+    jobs_features["N0"] = [[], [], [], [], []]
     for i in range(config['model']['news_entity_num']):
         for j in range(4):
-            news_features["N0"][j].append(0)
-    news_features["N0"][4] = np.zeros(config['model']['document_embedding_dim'])
-    return news_features, 100, 10, 100
+            jobs_features["N0"][j].append(0)
+    jobs_features["N0"][4] = np.zeros(config['model']['document_embedding_dim'])
+    return jobs_features, 100, 10, 100
 
 
 def construct_adj_mind_jobs(config, entity2id_dict, entity2embedding_dict):  # graph is triple
-    print('constructing adjacency matrix jobs...')
+    print('constructing adjacency matrix ...')
     entities_ids = set(entity2id_dict.values())
     with open(config['jobs']['knowledge_graph'], 'r', encoding='utf-8') as graph_file_fp:
         kg = {}
@@ -508,9 +481,8 @@ def construct_adj_mind_jobs(config, entity2id_dict, entity2embedding_dict):  # g
             new_key = entity2embedding_dict[id2entity_dict[int(key)]]
             entity_adj[new_key].append(int(kg[key][i][0]))
             relation_adj[new_key].append(int(kg[key][i][1]))
-    entity_adj = np.array(entity_adj)
-    relation_adj = np.array(relation_adj)
-    print('construct_adj_mind jobs finish')
+
+    print('construct_adj_mind finish')
     return entity_adj, relation_adj
 
 
@@ -526,24 +498,24 @@ def construct_embedding_jobs(config, entity2id_dict, entity_embedding, entity2em
         i = 1
         for line in fp_entity_embedding:
             if i in id2entity_dict:
-                linesplit = line.strip().split(' ')
+                linesplit = line.strip().split('\t')
                 linesplit = [float(i) for i in linesplit]
                 entity2embedding_dict[id2entity_dict[i]] = len(entity_embedding)
                 entity_embedding.append(linesplit)
             i += 1
     with open(config['jobs']['relation_embedding'], 'r', encoding='utf-8') as fp_relation_embedding:
         for line in fp_relation_embedding:
-            linesplit = line.strip().split(' ')
+            linesplit = line.strip().split('\t')
             linesplit = [float(i) for i in linesplit]
             relation_embedding.append(linesplit)
     return entity2embedding_dict, entity_embedding, relation_embedding
 
 
-def build_vert_data(config):
-    random.seed(2020)
+def build_vert_data_jobs(config):
+    random.seed(2023)
     vert_label_dict = {}
     label_index = 0
-    all_news_data = []
+    all_jobs_data = []
     vert_train = {}
     vert_dev = {}
     item1_list_train = []
@@ -552,23 +524,25 @@ def build_vert_data(config):
     item1_list_dev = []
     item2_list_dev = []
     label_list_dev = []
-    fp_train_news = open(config['data']['train_news'], 'r', encoding='utf-8')
-    for line in fp_train_news:
-        newsid, vert, subvert, title, abstract, url, entity_info_title, entity_info_abstract = line.strip().split('\t')
+    fp_train_jobs = open(config['jobs']['train_jobs'], 'r', encoding='utf-8')
+    df = pd.read_csv(fp_train_jobs, sep='\t')
+    df.replace(np.nan, 0)
+    for index, row in df.iterrows():
+        jobsid = row['post_id']
+        vert = row['industries']
         if vert not in vert_label_dict:
             vert_label_dict[vert] = label_index
             label_index = label_index + 1
-        all_news_data.append((newsid, vert_label_dict[vert]))
-    print(vert_label_dict)
-    for i in range(len(all_news_data)):
+        all_jobs_data.append((jobsid, vert_label_dict[vert]))
+    for i in range(len(all_jobs_data)):
         if random.random() < 0.8:
             item1_list_train.append("U0")
-            item2_list_train.append(all_news_data[i][0])
-            label_list_train.append(all_news_data[i][1])
+            item2_list_train.append(all_jobs_data[i][0])
+            label_list_train.append(all_jobs_data[i][1])
         else:
             item1_list_dev.append("U0")
-            item2_list_dev.append(all_news_data[i][0])
-            label_list_dev.append(all_news_data[i][1])
+            item2_list_dev.append(all_jobs_data[i][0])
+            label_list_dev.append(all_jobs_data[i][1])
     vert_train['item1'] = item1_list_train
     vert_train['item2'] = item2_list_train
     vert_train['label'] = label_list_train
@@ -579,13 +553,14 @@ def build_vert_data(config):
     return vert_train, vert_dev
 
 
-def build_pop_data(config):
-    fp_train = open(config['data']['train_behavior'], 'r', encoding='utf-8')
+def build_pop_data_jobs(config):
+    fp_train = open(config['jobs']['train_behavior'], 'r', encoding='utf-8')
     news_imp_dict = {}
     pop_train = {}
     pop_test = {}
+    next(fp_train)
     for line in fp_train:
-        index, userid, imp_time, history, behavior = line.strip().split('\t')
+        userid, history, behavior = line.strip().split('\t')
         behavior = behavior.split(' ')
         for news in behavior:
             newsid, news_label = news.split('-')
@@ -603,8 +578,9 @@ def build_pop_data(config):
     return pop_train, pop_test
 
 
-def build_item2item_data(config):
-    fp_train = open(config['data']['train_behavior'], 'r', encoding='utf-8')
+def build_item2item_data_jobs(config):
+    fp_train = open(config['jobs']['train_behavior'], 'r', encoding='utf-8')
+    next(fp_train)
     item2item_train = {}
     item2item_test = {}
     item1_train = []
@@ -614,30 +590,30 @@ def build_item2item_data(config):
     item2_dev = []
     label_dev = []
     user_history_dict = {}
-    news_click_dict = {}
+    jobs_click_dict = {}
     doc_doc_dict = {}
-    all_news_set = set()
+    all_jobs_set = set()
     for line in fp_train:
-        index, userid, imp_time, history, behavior = line.strip().split('\t')
+        userid, history, behavior = line.strip().split('\t')
         behavior = behavior.split(' ')
         if userid not in user_history_dict:
             user_history_dict[userid] = set()
         for news in behavior:
             newsid, news_label = news.split('-')
-            all_news_set.add(newsid)
+            all_jobs_set.add(newsid)
             if news_label == "1":
                 user_history_dict[userid].add(newsid)
-                if newsid not in news_click_dict:
-                    news_click_dict[newsid] = 1
+                if newsid not in jobs_click_dict:
+                    jobs_click_dict[newsid] = 1
                 else:
-                    news_click_dict[newsid] = news_click_dict[newsid] + 1
+                    jobs_click_dict[newsid] = jobs_click_dict[newsid] + 1
         news = history.split(' ')
         for newsid in news:
             user_history_dict[userid].add(newsid)
-            if newsid not in news_click_dict:
-                news_click_dict[newsid] = 1
+            if newsid not in jobs_click_dict:
+                jobs_click_dict[newsid] = 1
             else:
-                news_click_dict[newsid] = news_click_dict[newsid] + 1
+                jobs_click_dict[newsid] = jobs_click_dict[newsid] + 1
     for user in user_history_dict:
         list_user_his = list(user_history_dict[user])
         for i in range(len(list_user_his) - 1):
@@ -653,14 +629,14 @@ def build_item2item_data(config):
                         doc_doc_dict[(doc2, doc1)] = doc_doc_dict[(doc2, doc1)] + 1
     weight_doc_doc_dict = {}
     for item in doc_doc_dict:
-        if item[0] in news_click_dict and item[1] in news_click_dict:
+        if item[0] in jobs_click_dict and item[1] in jobs_click_dict:
             weight_doc_doc_dict[item] = doc_doc_dict[item] / math.sqrt(
-                news_click_dict[item[0]] * news_click_dict[item[1]])
+                jobs_click_dict[item[0]] * jobs_click_dict[item[1]])
 
     THRED_CLICK_TIME = 10
     freq_news_set = set()
-    for news in news_click_dict:
-        if news_click_dict[news] > THRED_CLICK_TIME:
+    for news in jobs_click_dict:
+        if jobs_click_dict[news] > THRED_CLICK_TIME:
             freq_news_set.add(news)
     news_pair_thred_w_dict = {}  # {(new1, news2): click_weight}
     for item in weight_doc_doc_dict:
@@ -701,9 +677,9 @@ def build_item2item_data(config):
     return item2item_train, item2item_test
 
 
-def load_data_mind(config, embedding_folder=None):
+def load_data_mind_jobs(config, embedding_folder=None):
     # Build the dictionary for all the entities in the news
-    entity2id_dict = entity_to_id(config, entities_news(config))
+    entity2id_dict = entity_to_id_jobs(config, entities_jobs(config))
 
     # Initialize the list containing all the embeddings
     entity_embedding = []
@@ -712,19 +688,19 @@ def load_data_mind(config, embedding_folder=None):
     # Initialize the dictionary mapping the entity name and the position of embedding in the list
     entity2embedding_dict = {}
     # Load only the embeddings of the entities in the news
-    entity2embedding_dict, entity_embedding, relation_embedding = construct_embedding_mind(config, entity2id_dict,
+    entity2embedding_dict, entity_embedding, relation_embedding = construct_embedding_jobs(config, entity2id_dict,
                                                                                            entity_embedding,
                                                                                            entity2embedding_dict)
 
     # For each entity in the news, get the neighbours entities in the wikidata graph and their relations
-    entity_adj, relation_adj = construct_adj_mind(config, entity2id_dict, entity2embedding_dict)
+    entity_adj, relation_adj = construct_adj_mind_jobs(config, entity2id_dict, entity2embedding_dict)
 
     # Some of the entities in the neighborhood are not part of the entities in the news, so after having identiefied them,
     # their embedding is added to the list and they are added to the dictionary of entity2embedding
     entities_not_embedded = set([item for items in entity_adj for item in items]).difference(
         set(entity2id_dict.values()))
-    entity2id_dict_not_embedded = id_to_entity(config, entities_not_embedded)
-    entity2embedding_dict, entity_embedding, relation_embedding = construct_embedding_mind(config,
+    entity2id_dict_not_embedded = id_to_entity_jobs(config, entities_not_embedded)
+    entity2embedding_dict, entity_embedding, relation_embedding = construct_embedding_jobs(config,
                                                                                            entity2id_dict_not_embedded,
                                                                                            entity_embedding,
                                                                                            entity2embedding_dict)
@@ -741,30 +717,30 @@ def load_data_mind(config, embedding_folder=None):
     relation_embedding = torch.FloatTensor(np.array(relation_embedding))
 
     # Load the news
-    news_feature, max_entity_freq, max_entity_pos, max_entity_type = build_news_features_mind(config,
+    news_feature, max_entity_freq, max_entity_pos, max_entity_type = build_news_features_mind_jobs(config,
                                                                                               entity2embedding_dict,
                                                                                               embedding_folder)
 
     # Load the user history
-    user_history = build_user_history(config)
+    user_history = build_user_history_jobs(config)
 
     if config['trainer']['training_type'] == "multi-task":
-        train_data, dev_data = get_user2item_data(config)
-        vert_train, vert_test = build_vert_data(config)
-        pop_train, pop_test = build_pop_data(config)
-        item2item_train, item2item_test = build_item2item_data(config)
+        train_data, dev_data = get_user2item_data_jobs(config)
+        vert_train, vert_test = build_vert_data_jobs(config)
+        pop_train, pop_test = build_pop_data_jobs(config)
+        item2item_train, item2item_test = build_item2item_data_jobs(config)
         return user_history, entity_embedding, relation_embedding, entity_adj, relation_adj, news_feature, max_entity_freq, max_entity_pos, max_entity_type, train_data, dev_data, vert_train, vert_test, pop_train, pop_test, item2item_train, item2item_test
     elif config['trainer']['task'] == "user2item":
-        train_data, dev_data = get_user2item_data(config)
+        train_data, dev_data = get_user2item_data_jobs(config)
         return user_history, entity_embedding, relation_embedding, entity_adj, relation_adj, news_feature, max_entity_freq, max_entity_pos, max_entity_type, train_data, dev_data
     elif config['trainer']['task'] == "item2item":
-        item2item_train, item2item_test = build_item2item_data(config)
+        item2item_train, item2item_test = build_item2item_data_jobs(config)
         return user_history, entity_embedding, relation_embedding, entity_adj, relation_adj, news_feature, max_entity_freq, max_entity_pos, max_entity_type, item2item_train, item2item_test
     elif config['trainer']['task'] == "vert_classify":
-        vert_train, vert_test = build_vert_data(config)
+        vert_train, vert_test = build_vert_data_jobs(config)
         return user_history, entity_embedding, relation_embedding, entity_adj, relation_adj, news_feature, max_entity_freq, max_entity_pos, max_entity_type, vert_train, vert_test
     elif config['trainer']['task'] == "pop_predict":
-        pop_train, pop_test = build_pop_data(config)
+        pop_train, pop_test = build_pop_data_jobs(config)
         return user_history, entity_embedding, relation_embedding, entity_adj, relation_adj, news_feature, max_entity_freq, max_entity_pos, max_entity_type, pop_train, pop_test
     else:
         print("task error, please check config")
@@ -777,15 +753,15 @@ def load_compressed_pickle(filename):
 
 
 def load_pretrained_data_mind_jobs(config):
-    data_path = config['jobs']['mind_data']
+    data_path = config['jobs']['jobs_data']
     if data_path:
-        restored_data = load_compressed_pickle(config['jobs']['mind_data'])
+        restored_data = load_compressed_pickle(config['jobs']['jobs_data'])
         user_history = restored_data["user_history"]
         entity_embedding = restored_data["entity_embedding"]
         relation_embedding = restored_data["relation_embedding"]
         entity_adj = restored_data["entity_adj"]
         relation_adj = restored_data["relation_adj"]
-        news_feature = restored_data["news_feature"]
+        news_feature = restored_data["jobs_feature"]
         max_entity_freq = restored_data["max_entity_freq"]
         max_entity_pos = restored_data["max_entity_pos"]
         max_entity_type = restored_data["max_entity_type"]

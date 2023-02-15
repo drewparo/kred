@@ -22,19 +22,19 @@ data:
 
 jobs:
   train_jobs : "./datasets/LinkedIn-Tech-Job-Data/train_jobs.tsv"
-  #train_behavior : "./datasets/mind_train_demo/behaviors.tsv"
+  train_behavior : "./datasets/LinkedIn-Tech-Job-Data/behaviors_train_jobs.tsv"
   valid_jobs : "./datasets/LinkedIn-Tech-Job-Data/valid_jobs.tsv"
-  #valid_behavior : "./datasets/mind_val_demo/behaviors.tsv"
+  valid_behavior : "./datasets/LinkedIn-Tech-Job-Data/behaviors_valid_jobs.tsv"
   knowledge_graph : "./datasets/LinkedIn-Tech-Job-Data/triple2id_jobs.txt"
   entity_embedding : "./datasets/LinkedIn-Tech-Job-Data/entity2vecd100_jobs.vec"
-  num_entity_embedding: 13358
+  num_entity_embedding: 13355
   wikidata_ids: "./datasets/LinkedIn-Tech-Job-Data/wikidata_ids.txt"
   relation_embedding : "./datasets/LinkedIn-Tech-Job-Data/relation2vecd100_jobs.vec"
   entity_index : "./datasets/LinkedIn-Tech-Job-Data/entity2id_jobs.txt"
   relation_index : "./datasets/LinkedIn-Tech-Job-Data/relation2id_jobs.txt"
   #sparse_adj_entity : "./datasets/LinkedIn-Tech-Job-Data/entity_adj.npy"
   #sparse_adj_relation : "./datasets/LinkedIn-Tech-Job-Data/relation_adj.npy"
-  jobs_data : "./data_dict_1672848868384.pkl"
+  jobs_data : "./data_dict_jobs_1676475431977.pkl"
 
 model:
   document_embedding_dim: 768
@@ -48,8 +48,8 @@ model:
 
 trainer:
   training_type: "single_task" # single_task or multi-task
-  task: "item2item" # task should be within: user2item, item2item, vert_classify, pop_predict
-  epochs: 100
+  task: "user2item" # task should be within: user2item, item2item, vert_classify, pop_predict
+  epochs: 5
   smooth_lamda: 10
   train_neg_num: 4
   save_dir: "./out/saved/"

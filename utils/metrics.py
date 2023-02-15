@@ -23,7 +23,6 @@ def get_idcg(truth, topk):
             idcg = idcg + math.log(2) / math.log(i + 2)
     if idcg == 0:
         idcg = 1.0
-        print("zero error")
     return idcg
 
 def cal_ndcg_float(truth, preds, topk):

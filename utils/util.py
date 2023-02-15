@@ -207,7 +207,9 @@ def real_batch(batch):
     data['item1'] = []
     data['item2'] = []
     data['label'] = []
+    #print(batch)
     for item in batch:
+        #print(item['item1'], item['item2'], item['label'])
         data['item1'].append(item['item1'])
         data['item2'].append(item['item2'])
         data['label'].append(item['label'])
