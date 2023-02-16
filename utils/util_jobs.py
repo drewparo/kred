@@ -1,5 +1,3 @@
-import gzip
-import json
 import pandas as pd
 import torch
 import random
@@ -17,7 +15,9 @@ from tqdm import tqdm
 import pickle
 import shutil
 import csv
+import json
 from train_test import *
+import gzip
 
 def cleaner_jobs(config):
     change_in_train = False
