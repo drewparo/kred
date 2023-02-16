@@ -7,7 +7,7 @@ def main_preprocessing(config):
     epochs = input("Write the number of epochs. Suggestion: 5 or 10 epochs: ")
     batch_size = input("Write the size of the batch. Suggested: 32 or 64: ")
     if task.lower() == "user2item" or task.lower() =='item2item' or  task.lower() =="vert_classify" or task.lower() =="pop_predict":
-        train_type= "single_task"
+        train_type = "single_task"
     elif task.lower() == "multi-task":
         train_type = task.lower()
 
@@ -17,7 +17,7 @@ def main_preprocessing(config):
     config['trainer']['task'] = task
 
     # Read LinkedIn dataset
-    df_jobs = pd.read_csv('/datasets/LinkedIn-Tech-Job-Data/jobs.csv')
+    df_jobs = pd.read_csv('datasets/LinkedIn-Tech-Job-Data/LinkedIn-jobs.csv')
     records = df_jobs.to_dict(orient='records')
     jobs_info = ['post_id', 'industries', 'job_function', 'title', 'abstract', 'post_url', 'entity_info_title',
                      'entity_info_abstract']
@@ -97,7 +97,7 @@ def main_preprocessing(config):
     # Generate csv for user, entities in survey
     fix_survey(df, user_info)
 
-    df_users = pd.read_csv('/datasets/LinkedIn-Tech-Job-Data/user_entities_stackoverflow.csv')
+    df_users = pd.read_csv('datasets/LinkedIn-Tech-Job-Data/user_entities_stackoverflow.csv')
 
     # Generate history and behaviors gpr
     df_users = generate_history_behaviors(df_users, df_jobs)

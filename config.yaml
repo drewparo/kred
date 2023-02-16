@@ -6,9 +6,9 @@ data_loader:
     num_workers: 1
 
 jobs:
-  train_jobs : "./datasets/LinkedIn-Tech-Job-Data/jobs.tsv"
+  train_jobs : "./datasets/LinkedIn-Tech-Job-Data/jobs.csv"
   train_behavior : "./datasets/LinkedIn-Tech-Job-Data/behaviors_train_jobs.tsv"
-  valid_jobs : "./datasets/LinkedIn-Tech-Job-Data/jobs.tsv"
+  valid_jobs : "./datasets/LinkedIn-Tech-Job-Data/jobs.csv"
   valid_behavior : "./datasets/LinkedIn-Tech-Job-Data/behaviors_valid_jobs.tsv"
   knowledge_graph : "./datasets/LinkedIn-Tech-Job-Data/triple2id_jobs.txt"
   entity_embedding : "./datasets/LinkedIn-Tech-Job-Data/entity2vecd100_jobs.vec"
@@ -28,11 +28,10 @@ model:
   layer_dim: 128
   user_his_num: 20
 
-
 trainer:
   training_type: "single_task" # single_task or multi-task
   task: "user2item" # task should be within: user2item, item2item, vert_classify, pop_predict
-  epochs: 10
+  epochs: 5
   smooth_lamda: 10
   train_neg_num: 4
   save_dir: "./out/saved/"

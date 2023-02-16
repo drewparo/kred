@@ -70,13 +70,13 @@ class ConfigParser:
             cfg_fname = Path(args.config)
 
         #config = read_json(cfg_fname)
-        fp_yaml = open('./config.yaml')
+        fp_yaml = open('config.yaml')
         config = yaml.safe_load(fp_yaml)
         if args.config and resume:
             # update new config for fine-tuning
             config.update(read_json(args.config))
 
-        # parse custom cli options into dictionary
+            # parse custom cli options into dictionary
         modification = {opt.target: getattr(args, _get_opt_name(opt.flags)) for opt in options}
         return cls(config, resume, modification)
 

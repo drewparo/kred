@@ -1,7 +1,7 @@
 import shutil
 import csv
 from train_test import *
-
+from utils.util_jobs import entities_jobs, entity_to_id_jobs
 
 def cleaner_jobs(config):
     change_in_train = False

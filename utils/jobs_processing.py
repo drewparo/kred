@@ -9,7 +9,7 @@ import csv
 def create_jobs_dataset(records, jobs_info):
     djob = {}
     wikidata_ids = []
-    with open('datasets/LinkedIn-Tech-Job-Data/jobs.csv', 'a', encoding='utf-8', newline='') as csvfile:
+    with open('datasets/LinkedIn-Tech-Job-Data/jobs.csv', 'w', encoding='utf-8', newline='') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=jobs_info)
         for job in records:
             djob["post_id"] = job['post_id']

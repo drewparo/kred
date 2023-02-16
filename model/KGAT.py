@@ -140,7 +140,7 @@ class KGAT(BaseModel):
         neighbor_entities = torch.tensor(neighbor_entities).cuda()
         #if neighbor_entities.shape[2] != 20 or neighbor_entities.shape[1] != 20:
         #    raise ValueError("Expected third dimension to be 20, got {}".format(neighbor_entities.shape[2]))
-        neighbor_entity_embedding = entity_embedding_lookup(torch.tensor(neighbor_entities).cuda())
+        neighbor_entity_embedding = entity_embedding_lookup(neighbor_entities.clone().detach())#(torch.tensor(neighbor_entities).cuda())
         neighbor_relation_embedding = relation_embedding_lookup(torch.tensor(neighbor_relations).cuda())
         entity_embedding = entity_embedding_lookup(torch.tensor(entity_ids).cuda())
 

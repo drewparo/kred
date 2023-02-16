@@ -3,5 +3,3 @@ venv/
 *.pyc
 data_dict_1672848868384.pkl/
 datasets/
-test_data.pkl/
-first100pairs_test_data.csv/

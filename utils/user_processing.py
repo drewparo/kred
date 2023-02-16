@@ -1,6 +1,9 @@
 import numpy as np
 import ast
 import csv
+
+import pandas as pd
+
 from utils import extract_wikidata
 def modify_df_jobs(df_jobs):
     new_col = []
@@ -92,3 +95,28 @@ def generate_history_behaviors(df_users,df_jobs):
 
     df_users = df_users[['User','Histories','Behaviors']]
     return df_users
+
+def split_behaviors(filename):
+    with open(filename, 'r', encoding='utf-8') as csv_file:
+        # Load the data from the CSV file into a pandas DataFrame
+        df = pd.read_csv(csv_file, sep='\t')
+        df = df.drop(df.columns[:1], axis=1)
+
+        # Calculate the number of rows in the DataFrame
+        n = df.shape[0]
+
+        # Generate a random permutation of the indices
+        idx = np.random.permutation(n)
+
+        # Split the indices into training and validation sets
+        split = int(0.8 * n)
+        train_idx = idx[:split]
+        val_idx = idx[split:]
+
+        # Split the DataFrame into training and validation sets based on the indices
+        train_df = df.iloc[train_idx, :]
+        val_df = df.iloc[val_idx, :]
+
+        # Save the training and validation sets as CSV files
+        train_df.to_csv('datasets/LinkedIn-Tech-Job-Data/behaviors_train_jobs.tsv', sep='\t', index=False)
+        val_df.to_csv('datasets/LinkedIn-Tech-Job-Data/behaviors_valid_jobs.tsv', sep='\t', index=False)

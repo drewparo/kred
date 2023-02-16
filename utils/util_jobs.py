@@ -15,8 +15,84 @@ import math
 import zipfile
 from tqdm import tqdm
 import pickle
+import shutil
+import csv
+from train_test import *
 
-from utils.cleaner_jobs import cleaner_jobs
+def cleaner_jobs(config):
+    change_in_train = False
+    change_in_val = False
+    entity2id_dict = entity_to_id_jobs(config, entities_jobs(config))
+    if not os.path.exists("tmp"):
+        os.makedirs("tmp")
+
+    with open(config["jobs"]["train_jobs"], encoding='utf-8') as old, open('tmp/' + config["jobs"]["train_jobs"].split('/')[-1],'w+', encoding='utf-8') as new:
+        # Create a csv reader object
+        reader_old = csv.reader(old, delimiter=',')
+
+        # Skip the first line
+        next(reader_old)
+
+        for line in reader_old:
+            jobsid = line[0]
+            vert = line[1]
+            subvert = line[2]
+            title = line[3]
+            abstract = line[4]
+            url = line[5]
+            entity_info_title = eval(str(line[6]))
+            entity_info_abstract = line[7]
+
+            for index, entity in enumerate(entity_info_title):
+                if not entity_info_title:
+                    break
+                if entity2id_dict.get(entity['WikidataId'], config["jobs"]["num_entity_embedding"]) > config["jobs"]["num_entity_embedding"]:
+                    change_in_train = True
+                    del entity_info_title[index]
+            entity_info_title = json.dumps(entity_info_title)
+
+            new_line = '\t'.join([jobsid, vert, subvert, title, abstract, url, entity_info_title, entity_info_abstract])
+            new.write(new_line + '\n')
+
+    with open(config["jobs"]["valid_jobs"], encoding='utf-8') as old, open('tmp/' + config["jobs"]["valid_jobs"].split('/')[-1], 'w+', encoding='utf-8') as new:
+        # Create a csv reader object
+        reader_old = csv.reader(old, delimiter=',')
+
+        # Skip the first line
+        next(reader_old)
+
+        for line in reader_old:
+            jobsid = line[0]
+            vert = line[1]
+            subvert = line[2]
+            title = line[3]
+            abstract = line[4]
+            url = line[5]
+            entity_info_title = eval(str(line[6]))
+            entity_info_abstract = line[7]
+            for index, entity in enumerate(entity_info_title):
+                if entity2id_dict.get(entity['WikidataId'], config["jobs"]["num_entity_embedding"]) > config["jobs"]["num_entity_embedding"]:
+                    change_in_val = True
+                    del entity_info_title[index]
+            entity_info_title = json.dumps(entity_info_title)
+            new_line = '\t'.join([jobsid, vert, subvert, title, abstract, url, entity_info_title, entity_info_abstract])
+            new.write(new_line + '\n')
+
+    try:
+        if change_in_val:
+            src_test = 'tmp/test_' + config["jobs"]["valid_jobs"].split('/')[-1]
+            dst_test = '/'.join(config["jobs"]["valid_jobs"].split('/')[:-1]) + '/'
+            shutil.copy(src_test, dst_test)
+        if change_in_train:
+            src_train = 'tmp/train_' + config["jobs"]["train_jobs"].split('/')[-1]
+            dst_train = '/'.join(config["jobs"]["train_jobs"].split('/')[:-1]) + '/'
+            shutil.copy(src_train, dst_train)
+        return config
+    except:
+        print('Replacing name in config')
+        config['jobs']['train_jobs'] = os.path.abspath('tmp/test_' + config["jobs"]["valid_jobs"].split('/')[-1])
+        config['jobs']['valid_jobs'] = os.path.abspath('tmp/train_' + config["jobs"]["train_jobs"].split('/')[-1])
+        return config
 
 
 # Create file and save data using pickle
@@ -34,7 +110,7 @@ def load_from_pickle(filename):
 
 def entities_jobs(config):
     entities = set()
-    # Read entities from train jobs config["data"]["train_jobs"]=jobs.csv
+    # Read entities from train jobs config["data"]["train_jobs"]=LinkedIn-jobs.csv
     with open(config['jobs']['wikidata_ids'], 'r', encoding='utf-8') as file:
         entities = set(line.strip() for line in file)
     return entities
@@ -348,7 +424,7 @@ def build_news_features_mind_jobs(config, entity2embedding_dict, embedding_folde
 
     jobs_feature_dict = {}
     fp_train_jobs = open(config['jobs']['train_jobs'], 'r', encoding='utf-8')
-    df = pd.read_csv(fp_train_jobs, sep='\t')
+    df = pd.read_csv(fp_train_jobs, sep=',')
     df.replace(np.nan,0)
     for index, row in df.iterrows():
         jobsid = row['post_id']
@@ -359,7 +435,7 @@ def build_news_features_mind_jobs(config, entity2embedding_dict, embedding_folde
         jobs_feature_dict[jobsid] = (title + " " + abstract, entity_info_title, entity_info_abstract)
 
     fp_dev_jobs = open(config['jobs']['valid_jobs'], 'r', encoding='utf-8')
-    df = pd.read_csv(fp_dev_jobs, sep='\t')
+    df = pd.read_csv(fp_dev_jobs, sep=',')
     df.replace(np.nan, 0)
     for index, row in df.iterrows():
         jobsid = row['post_id']
@@ -376,7 +452,7 @@ def build_news_features_mind_jobs(config, entity2embedding_dict, embedding_folde
         sentences_embedding = load_from_pickle(embedding_folder + "train_jobs_embeddings")
         sentences_embedding.extend(load_from_pickle(embedding_folder + "valid_jobs_embeddings"))
     else:
-        model = SentenceTransformer('all-mpnet-base-v2')
+        model = SentenceTransformer('all-mpnet-base-v2').to('cuda:0')
 
     for i, jobs in enumerate(jobs_feature_dict):
         if embedding_folder is not None:
@@ -748,65 +824,92 @@ def load_pretrained_data_mind_jobs(config):
     data_path = config['jobs']['jobs_data']
     if data_path:
         restored_data = load_compressed_pickle(config['jobs']['jobs_data'])
-        user_history = restored_data["user_history"]
-        entity_embedding = restored_data["entity_embedding"]
-        relation_embedding = restored_data["relation_embedding"]
-        entity_adj = restored_data["entity_adj"]
-        relation_adj = restored_data["relation_adj"]
-        news_feature = restored_data["jobs_feature"]
-        max_entity_freq = restored_data["max_entity_freq"]
-        max_entity_pos = restored_data["max_entity_pos"]
-        max_entity_type = restored_data["max_entity_type"]
-        train_data = restored_data["train_data"]
-        dev_data = restored_data["dev_data"]
-        vert_train = restored_data["vert_train"]
-        vert_test = restored_data["vert_test"]
-        pop_train = restored_data["pop_train"]
-        pop_test = restored_data["pop_test"]
-        item2item_train = restored_data["item2item_train"]
-        item2item_test = restored_data["item2item_test"]
+
         if config['trainer']['training_type'] == "multi-task":
+            user_history = restored_data["user_history"]
+            entity_embedding = restored_data["entity_embedding"]
+            relation_embedding = restored_data["relation_embedding"]
+            entity_adj = restored_data["entity_adj"]
+            relation_adj = restored_data["relation_adj"]
+            news_feature = restored_data["jobs_feature"]
+            max_entity_freq = restored_data["max_entity_freq"]
+            max_entity_pos = restored_data["max_entity_pos"]
+            max_entity_type = restored_data["max_entity_type"]
+            train_data = restored_data["train_data"]
+            dev_data = restored_data["dev_data"]
+            vert_train = restored_data["vert_train"]
+            vert_test = restored_data["vert_test"]
+            pop_train = restored_data["pop_train"]
+            pop_test = restored_data["pop_test"]
+            item2item_train = restored_data["item2item_train"]
+            item2item_test = restored_data["item2item_test"]
             data = user_history, entity_embedding, relation_embedding, entity_adj, relation_adj, news_feature, max_entity_freq, max_entity_pos, max_entity_type, train_data, dev_data, vert_train, vert_test, pop_train, pop_test, item2item_train, item2item_test
+            return data
+
         elif config['trainer']['task'] == "user2item":
+            user_history = restored_data["user_history"]
+            entity_embedding = restored_data["entity_embedding"]
+            relation_embedding = restored_data["relation_embedding"]
+            entity_adj = restored_data["entity_adj"]
+            relation_adj = restored_data["relation_adj"]
+            news_feature = restored_data["jobs_feature"]
+            max_entity_freq = restored_data["max_entity_freq"]
+            max_entity_pos = restored_data["max_entity_pos"]
+            max_entity_type = restored_data["max_entity_type"]
+            train_data = restored_data["train_data"]
+            dev_data = restored_data["dev_data"]
             data = user_history, entity_embedding, relation_embedding, entity_adj, relation_adj, news_feature, max_entity_freq, max_entity_pos, max_entity_type, train_data, dev_data
+            return data
+
         elif config['trainer']['task'] == "item2item":
+            user_history = restored_data["user_history"]
+            entity_embedding = restored_data["entity_embedding"]
+            relation_embedding = restored_data["relation_embedding"]
+            entity_adj = restored_data["entity_adj"]
+            relation_adj = restored_data["relation_adj"]
+            news_feature = restored_data["jobs_feature"]
+            max_entity_freq = restored_data["max_entity_freq"]
+            max_entity_pos = restored_data["max_entity_pos"]
+            max_entity_type = restored_data["max_entity_type"]
+            item2item_train = restored_data["item2item_train"]
+            item2item_test = restored_data["item2item_test"]
             data = user_history, entity_embedding, relation_embedding, entity_adj, relation_adj, news_feature, max_entity_freq, max_entity_pos, max_entity_type, item2item_train, item2item_test
+            return data
+
         elif config['trainer']['task'] == "vert_classify":
+            user_history = restored_data["user_history"]
+            entity_embedding = restored_data["entity_embedding"]
+            relation_embedding = restored_data["relation_embedding"]
+            entity_adj = restored_data["entity_adj"]
+            relation_adj = restored_data["relation_adj"]
+            news_feature = restored_data["jobs_feature"]
+            max_entity_freq = restored_data["max_entity_freq"]
+            max_entity_pos = restored_data["max_entity_pos"]
+            max_entity_type = restored_data["max_entity_type"]
+            vert_train = restored_data["vert_train"]
+            vert_test = restored_data["vert_test"]
             data = user_history, entity_embedding, relation_embedding, entity_adj, relation_adj, news_feature, max_entity_freq, max_entity_pos, max_entity_type, vert_train, vert_test
+            return data
+
         elif config['trainer']['task'] == "pop_predict":
+            user_history = restored_data["user_history"]
+            entity_embedding = restored_data["entity_embedding"]
+            relation_embedding = restored_data["relation_embedding"]
+            entity_adj = restored_data["entity_adj"]
+            relation_adj = restored_data["relation_adj"]
+            news_feature = restored_data["jobs_feature"]
+            max_entity_freq = restored_data["max_entity_freq"]
+            max_entity_pos = restored_data["max_entity_pos"]
+            max_entity_type = restored_data["max_entity_type"]
+            pop_train = restored_data["pop_train"]
+            pop_test = restored_data["pop_test"]
             data = user_history, entity_embedding, relation_embedding, entity_adj, relation_adj, news_feature, max_entity_freq, max_entity_pos, max_entity_type, pop_train, pop_test
-        return data
+            return data
     else:
         print(f"Data not found at {data_path}")
         return None
 
-def split_behaviors(filename):
-    with open(filename, 'r', encoding='utf-8') as csv_file:
-        # Load the data from the CSV file into a pandas DataFrame
-        df = pd.read_csv(csv_file, sep='\t')
-        df = df.drop(df.columns[:1], axis=1)
-
-        # Calculate the number of rows in the DataFrame
-        n = df.shape[0]
-
-        # Generate a random permutation of the indices
-        idx = np.random.permutation(n)
-
-        # Split the indices into training and validation sets
-        split = int(0.8 * n)
-        train_idx = idx[:split]
-        val_idx = idx[split:]
-
-        # Split the DataFrame into training and validation sets based on the indices
-        train_df = df.iloc[train_idx, :]
-        val_df = df.iloc[val_idx, :]
-
-        # Save the training and validation sets as CSV files
-        train_df.to_csv('datasets/LinkedIn-Tech-Job-Data/behaviors_train_jobs.tsv', sep='\t', index=False)
-        val_df.to_csv('datasets/LinkedIn-Tech-Job-Data/behaviors_valid_jobs.tsv', sep='\t', index=False)
-
 def save_dict_by_task(data, config):
-
         if config['trainer']['training_type'] == "multi-task":
             data_dict = {
                 'user_history': data[0],
