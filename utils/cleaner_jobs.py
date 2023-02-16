@@ -1,7 +1,5 @@
 import shutil
 import csv
-import pandas as pd
-from utils.util_jobs import entities_jobs, entity_to_id_jobs
 from train_test import *
 
 
@@ -27,9 +25,7 @@ def cleaner_jobs(config):
             abstract = line[4]
             url = line[5]
             entity_info_title = eval(str(line[6]))
-            #print(entity_info_title)
             entity_info_abstract = line[7]
-            #entity_info_title = json.loads(entity_info_title)
 
             for index, entity in enumerate(entity_info_title):
                 if not entity_info_title:
@@ -38,13 +34,7 @@ def cleaner_jobs(config):
                     change_in_train = True
                     del entity_info_title[index]
             entity_info_title = json.dumps(entity_info_title)
-            #entity_info_abstract = json.loads(entity_info_abstract)
-            #for index, entity in enumerate(entity_info_abstract):
-            #    if entity2id_dict.get(entity['WikidataId'], config["jobs"]["num_entity_embedding"]) > config["jobs"][
-            #        "num_entity_embedding"]:
-            #        change_in_train = True
-            #        del entity_info_abstract[index]
-            #entity_info_abstract = json.dumps(entity_info_abstract)
+
             new_line = '\t'.join([jobsid, vert, subvert, title, abstract, url, entity_info_title, entity_info_abstract])
             new.write(new_line + '\n')
 
@@ -64,20 +54,11 @@ def cleaner_jobs(config):
             url = line[5]
             entity_info_title = eval(str(line[6]))
             entity_info_abstract = line[7]
-            # print(entity_info_title)
-            #entity_info_title = json.loads(entity_info_title)
             for index, entity in enumerate(entity_info_title):
                 if entity2id_dict.get(entity['WikidataId'], config["jobs"]["num_entity_embedding"]) > config["jobs"]["num_entity_embedding"]:
                     change_in_val = True
                     del entity_info_title[index]
             entity_info_title = json.dumps(entity_info_title)
-            #entity_info_abstract = json.loads(entity_info_abstract)
-            #for index, entity in enumerate(entity_info_abstract):
-            #    if entity2id_dict.get(entity['WikidataId'], config["jobs"]["num_entity_embedding"]) > config["jobs"][
-            #        "num_entity_embedding"]:
-            #        change_in_val = True
-            #        del entity_info_abstract[index]
-            #entity_info_abstract = json.dumps(entity_info_abstract)
             new_line = '\t'.join([jobsid, vert, subvert, title, abstract, url, entity_info_title, entity_info_abstract])
             new.write(new_line + '\n')
 

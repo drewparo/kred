@@ -131,22 +131,9 @@ class KGAT(BaseModel):
 
     def forward(self, entity_ids):
         entity_ids = self.entity_ids_clearner(entity_ids)
-        # neighbor_entities, neighbor_relations = self.get_neighbors(entity_ids)
-        # Removed not present id
-        # neighbor_entities_tensor = torch.tensor(neighbor_entities).cuda()
-        # filter_mask = (neighbor_entities_tensor < 3241390).cuda()
-        # neighbor_entities_tensor[~filter_mask] = 0
-        # Removed not present id
-        # entity_ids_tensor = torch.tensor(entity_ids).cuda()
-        # filter_mask = (entity_ids_tensor < 3241390).cuda()
-        # entity_ids_tensor[~filter_mask] = 0
-        # entity_ids_tensor = entity_ids_tensor.cuda()
 
         neighbor_entities, neighbor_relations = self.get_neighbors(entity_ids)
 
-        # Some entity do not have embeddings
-        # print(torch.tensor(entity_ids).max(), 'max1')
-        # print(torch.tensor(neighbor_entities).max(), 'max12')
 
         entity_embedding_lookup = nn.Embedding.from_pretrained(self.entity_embedding.cuda())
         relation_embedding_lookup = nn.Embedding.from_pretrained(self.relation_embedding.cuda())

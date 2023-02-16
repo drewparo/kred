@@ -32,7 +32,7 @@ model:
 trainer:
   training_type: "single_task" # single_task or multi-task
   task: "user2item" # task should be within: user2item, item2item, vert_classify, pop_predict
-  epochs: 5
+  epochs: 10
   smooth_lamda: 10
   train_neg_num: 4
   save_dir: "./out/saved/"

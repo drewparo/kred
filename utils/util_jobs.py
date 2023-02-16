@@ -16,6 +16,8 @@ import zipfile
 from tqdm import tqdm
 import pickle
 
+from utils.cleaner_jobs import cleaner_jobs
+
 
 # Create file and save data using pickle
 def save_to_pickle(data, file_name):
@@ -652,6 +654,10 @@ def build_item2item_data_jobs(config):
 
 
 def load_data_mind_jobs(config, embedding_folder=None):
+
+    # Clean jobs before proceed
+    config = cleaner_jobs(config)
+
     # Build the dictionary for all the entities in the news
     entity2id_dict = entity_to_id_jobs(config, entities_jobs(config))
 
@@ -798,3 +804,90 @@ def split_behaviors(filename):
         # Save the training and validation sets as CSV files
         train_df.to_csv('datasets/LinkedIn-Tech-Job-Data/behaviors_train_jobs.tsv', sep='\t', index=False)
         val_df.to_csv('datasets/LinkedIn-Tech-Job-Data/behaviors_valid_jobs.tsv', sep='\t', index=False)
+
+def save_dict_by_task(data, config):
+
+        if config['trainer']['training_type'] == "multi-task":
+            data_dict = {
+                'user_history': data[0],
+                'entity_embedding': data[1],
+                'relation_embedding': data[2],
+                'entity_adj': data[3],
+                'relation_adj': data[4],
+                'jobs_feature': data[5],
+                'max_entity_freq': data[6],
+                'max_entity_pos': data[7],
+                'max_entity_type': data[8],
+                'train_data': data[9],
+                'dev_data': data[10],
+                'vert_train': data[11],
+                'vert_test': data[12],
+                'pop_train': data[13],
+                'pop_test': data[14],
+                'item2item_train': data[15],
+                'item2item_test': data[16]
+            }
+            return data_dict
+        elif config['trainer']['task'] == "user2item":
+            data_dict = {
+                'user_history': data[0],
+                'entity_embedding': data[1],
+                'relation_embedding': data[2],
+                'entity_adj': data[3],
+                'relation_adj': data[4],
+                'jobs_feature': data[5],
+                'max_entity_freq': data[6],
+                'max_entity_pos': data[7],
+                'max_entity_type': data[8],
+                'train_data': data[9],
+                'dev_data': data[10]
+            }
+            return data_dict
+        elif config['trainer']['task'] == "item2item":
+            data_dict = {
+                'user_history': data[0],
+                'entity_embedding': data[1],
+                'relation_embedding': data[2],
+                'entity_adj': data[3],
+                'relation_adj': data[4],
+                'jobs_feature': data[5],
+                'max_entity_freq': data[6],
+                'max_entity_pos': data[7],
+                'max_entity_type': data[8],
+                'item2item_train': data[9],
+                'item2item_test': data[10]
+            }
+            return data_dict
+        elif config['trainer']['task'] == "vert_classify":
+            data_dict = {
+                'user_history': data[0],
+                'entity_embedding': data[1],
+                'relation_embedding': data[2],
+                'entity_adj': data[3],
+                'relation_adj': data[4],
+                'jobs_feature': data[5],
+                'max_entity_freq': data[6],
+                'max_entity_pos': data[7],
+                'max_entity_type': data[8],
+                'vert_train': data[9],
+                'vert_test': data[10]
+            }
+            return data_dict
+        elif config['trainer']['task'] == "pop_predict":
+            data_dict = {
+                'user_history': data[0],
+                'entity_embedding': data[1],
+                'relation_embedding': data[2],
+                'entity_adj': data[3],
+                'relation_adj': data[4],
+                'jobs_feature': data[5],
+                'max_entity_freq': data[6],
+                'max_entity_pos': data[7],
+                'max_entity_type': data[8],
+                'pop_train': data[9],
+                'pop_test': data[10]
+            }
+            return data_dict
+        else:
+            print(f"Data not found!")
+            return None
