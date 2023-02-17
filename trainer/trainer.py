@@ -108,7 +108,7 @@ class Trainer(BaseTrainer):
         valid_scores = []
         early_stopping = EarlyStopping(patience=self.config['trainer']['early_stop'], verbose=True)
         for epoch in range(self.start_epoch, self.epochs + 1):
-            print(f'Training epoch {epoch - 1}/{self.epochs + 1} - {(epoch - 1) / (self.epochs + 1)}')
+            print(f'Training epoch {epoch - 1}/{self.epochs} - {(epoch - 1) / self.epochs}')
             self._train_epoch(epoch)
             print('_train_epoch')
             valid_socre = self._valid_epoch(epoch)
