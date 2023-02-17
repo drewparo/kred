@@ -19,4 +19,28 @@ To represent each entity and relationship, we query the WikiData portal using th
 We then use SentenceTransformer with the all-mpnet-base-v2 model to obtain the corresponding embedding, which is a 768-dimensional dense vector space used to represent each embedding. The same procedure is used for relationship encoding. However, due to the large space requirement of loading the entire knowledge graph into memory, we load the embeddings into memory in the form of tensors and apply PCA to reduce the size to 100.
 
 ## Running the code
+To execute the code, you could start from the preprocessing (with data to be prepared) or from the training (with ready data).
+
+### Preprocessing
+You should run 
+```
+KRED_LinkedIn_Preparation.ipynb
+```
+in order to obtain the dataset needed for the training.
+You have to choose between a naive extraction or the PEGASUS extraction for the summarization of the abstract.
+So the part you need to modify is commented in the code in ```utils/jobs_processing.py```. 
+### Training
+Train the model with 
+```
+KRED_Train_LinkedIn.ipynb
+```
+If you want to train with pickle of previous prepared data in ```dataset```, you need to change in ```config.yaml``` the part of
+```
+jobs: data_jobs
+```
+with the name of the type extraction you want to use: 
+- simple: ```./data_dict_jobs.pkl```
+- naive: ```./data_dict_jobs_naive.pkl```
+- PEGASUS: ```./data_dict_jobs_pegasus.pkl```
+
 

@@ -3,19 +3,6 @@ from utils.user_processing import *
 from utils.util_jobs import *
 
 def main_preprocessing(config):
-    task = input("Write the type of task you want to execute. Choose between user2item, item2item, vert_classify, pop_predict or multi-task: ")
-    epochs = input("Write the number of epochs. Suggestion: 5 or 10 epochs: ")
-    batch_size = input("Write the size of the batch. Suggested: 32 or 64: ")
-    if task.lower() == "user2item" or task.lower() =='item2item' or  task.lower() =="vert_classify" or task.lower() =="pop_predict":
-        train_type = "single_task"
-    elif task.lower() == "multi-task":
-        train_type = task.lower()
-
-    config['trainer']['epochs'] = epochs
-    config['data_loader']['batch_size'] = batch_size
-    config['trainer']['training_type'] = train_type
-    config['trainer']['task'] = task
-
     # Read LinkedIn dataset
     df_jobs = pd.read_csv('datasets/LinkedIn-Tech-Job-Data/LinkedIn-jobs.csv')
     records = df_jobs.to_dict(orient='records')

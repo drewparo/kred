@@ -16,7 +16,11 @@ def create_jobs_dataset(records, jobs_info):
             djob["industries"] = job['Industries']
             djob["job_function"] = job['Job function']
             djob["title"] = job['title']
-            djob["abstract"] = extract_wikidata.extract_significant_sentences(job['description']) ##
+            # Here behind you could choose between "naive" extraction
+            # djob["abstract"] = extract_wikidata.alternative_summarization(job['description'])
+            # or PEGASUS extraction
+            djob["abstract"] = extract_wikidata.extract_significant_sentences(job['description'])
+
             djob["post_url"] = job['post_url']
             djob["entity_info_title"] = extract_wikidata.get_extract(job['description'], wikidata_ids)
             djob["entity_info_abstract"] = []
