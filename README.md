@@ -27,3 +27,9 @@ The code has been tested running under Python 3.6.10, with the following package
 - scikit-learn==0.23.2
 - scipy==1.5.2
 - torch==1.4.0
+
+## Extensions
+
+Adressa Exploration: Branch x
+
+Jobs Recommedation: Branch y
