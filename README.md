@@ -34,7 +34,7 @@ Train the model with
 ```
 KRED_Train_LinkedIn.ipynb
 ```
-If you want to train with pickle of previous prepared data in ```dataset```, you need to change in ```config.yaml``` the part of
+If you want to train with pickle of previous prepared data in ```dataset```, before the training you need to change in ```config.yaml``` the part of
 ```
 jobs: data_jobs
 ```
