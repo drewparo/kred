@@ -30,6 +30,6 @@ The code has been tested running under Python 3.6.10, with the following package
 
 ## Extensions
 
-Adressa Exploration: Branch x
+Adressa Exploration: Branch [Adressa](https://github.com/drewparo/kred/tree/adressa_dataset)
 
-Jobs Recommedation: Branch y
+Jobs Recommedation: Branch [Job Recommandation](https://github.com/drewparo/kred/tree/job-recommandation)
