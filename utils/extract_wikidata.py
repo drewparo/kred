@@ -9,6 +9,7 @@ from txtai.pipeline import Summary
 from nltk.corpus import stopwords
 import spacy
 from heapq import nlargest
+
 nlp = spacy.load('en_core_web_sm')
 
 nltk.download('stopwords')
@@ -21,15 +22,26 @@ stopwords = list(STOP_WORDS)
 summary = Summary()
 
 
+## If using pegasus to summarize un-comment those line
+# from transformers import PegasusForConditionalGeneration, AutoTokenizer, AutoModelForSeq2SeqLM
+# import torch
+# device = 'cuda' if torch.cuda.is_available() else 'cpu'
+# model = AutoModelForSeq2SeqLM.from_pretrained("tuner007/pegasus_summarizer").to(device)
+# #model = ctranslate2.Translator("pegasus")
+# tokenizer = AutoTokenizer.from_pretrained("tuner007/pegasus_summarizer")
+# import mmh3
+# hash_sum = {}
 def get_ner(text):
     sent = nltk.word_tokenize(text)
     entities = nltk.ne_chunk(nltk.pos_tag(sent))
     return entities
 
+
 def get_wikidata_id(entity):
     query = entity.split()
     query = "+".join(query)
-    response = requests.get(f"https://www.wikidata.org/w/api.php?action=wbsearchentities&format=json&language=en&type=item&limit=1&search={query}")
+    response = requests.get(
+        f"https://www.wikidata.org/w/api.php?action=wbsearchentities&format=json&language=en&type=item&limit=1&search={query}")
     if response.status_code == 200:
         response_json = response.json()
         if "search" in response_json and response_json["search"]:
@@ -37,6 +49,7 @@ def get_wikidata_id(entity):
         else:
             return None
     return None
+
 
 def extract_significant_sentences(text):
     try:
@@ -82,39 +95,60 @@ def extract_significant_sentences(text):
         return text
 
 
-def get_extract(text, wikidata_ids):
-  try:
-      t = nlp(text)
-      list_dict = []
-      keys = ["Label", "WikidataId", "OccurrenceOffsets", "Type"]
-      wiki_h = []
-      entities = get_ner(text)
-      for entity in entities.subtrees():
-          wikidata_dict = {}
-          #print(entity.label())
-          if entity.label() != 'S':
-            entity_name = " ".join([i[0] for i in entity.leaves()])
-            wikidata_id = get_wikidata_id(entity_name)
-            if wikidata_id and wikidata_id not in wiki_h:
-                if wikidata_id not in wikidata_ids:
-                    wikidata_ids.append(wikidata_id)
-                wiki_h.append(wikidata_id)
-                wikidata_dict["Label"] = entity_name
-                wikidata_dict["WikidataId"] = wikidata_id
+def alternative_summarization(text):
+    # Text summarization using pegasus
+    global hash_sum
+    try:
+        if text is None or text == '':
+            return ''
+        hash_ = mmh3.hash(text)
+        if hash_ in hash_sum:
+            return hash_sum[hash_]
+        batch = tokenizer(text, truncation=True, padding='longest', return_tensors='pt').to(device)
+        # batch = tokenizer.prepare_seq2seq_batch(df['description'].tolist()[:1], truncation=True, padding='longest', return_tensors='pt')
+        translated = model.generate(**batch, max_length=149)
+        tgt_text = tokenizer.batch_decode(translated, skip_special_tokens=True)
+        decoded_pegasus_newsroom = tgt_text[0]
+        hash_sum[hash_] = decoded_pegasus_newsroom
+        return decoded_pegasus_newsroom
+    except:
+        print(text)
+        return ''
 
-                for token in t:
-                    if str(token) == entity_name:
-                        wikidata_dict["OccurrenceOffsets"] = token.idx
-                        break
-                for ent in t.ents:
-                    if ent.text in wikidata_dict["Label"]:
-                        wikidata_dict["Type"] = ent.label_[0]
-                if wikidata_dict and all(key in wikidata_dict for key in keys):
-                    list_dict.append(json.dumps(wikidata_dict, sort_keys=True))
-      del wiki_h
-      return list_dict
-  except ValueError:
-      return {}
+
+def get_extract(text, wikidata_ids):
+    try:
+        t = nlp(text)
+        list_dict = []
+        keys = ["Label", "WikidataId", "OccurrenceOffsets", "Type"]
+        wiki_h = []
+        entities = get_ner(text)
+        for entity in entities.subtrees():
+            wikidata_dict = {}
+            # print(entity.label())
+            if entity.label() != 'S':
+                entity_name = " ".join([i[0] for i in entity.leaves()])
+                wikidata_id = get_wikidata_id(entity_name)
+                if wikidata_id and wikidata_id not in wiki_h:
+                    if wikidata_id not in wikidata_ids:
+                        wikidata_ids.append(wikidata_id)
+                    wiki_h.append(wikidata_id)
+                    wikidata_dict["Label"] = entity_name
+                    wikidata_dict["WikidataId"] = wikidata_id
+
+                    for token in t:
+                        if str(token) == entity_name:
+                            wikidata_dict["OccurrenceOffsets"] = token.idx
+                            break
+                    for ent in t.ents:
+                        if ent.text in wikidata_dict["Label"]:
+                            wikidata_dict["Type"] = ent.label_[0]
+                    if wikidata_dict and all(key in wikidata_dict for key in keys):
+                        list_dict.append(json.dumps(wikidata_dict, sort_keys=True))
+        del wiki_h
+        return list_dict
+    except ValueError:
+        return {}
 
 
 def get_ids(col_dict, wikidata_ids):
