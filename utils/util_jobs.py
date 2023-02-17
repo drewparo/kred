@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 from itertools import repeat
 from collections import OrderedDict
-from IPython.core.display_functions import clear_output
+from IPython.core.display import clear_output
 from sentence_transformers import SentenceTransformer
 import requests
 import math
