@@ -26,6 +26,15 @@ The document vector (DV) is constructed using the SentenceTransformers library a
 
 ##  Running the code
 
+To download the  pre-elaborated dataset use the following link:
+[KRED - Adressa Dataset Data](https://drive.google.com/file/d/1IEbO2AbzuTZFDXy8VVLF4CO42QmWGGlG/view?usp=sharing)
+Place it in the main folder.
+
+Then train the model using 
+```
+KRED-Model_Train.ipynb
+```
+
 Datasets
 [Light version 1: 1.4 GB (compressed) - 1 Week of data collection - 923 articles (in Norwegian), 15.514 users, average article length is 518.6 words](https://reclab.idi.ntnu.no/dataset/one_week.tar.gz)
 [Light version 2: 16 GB (compressed) - 10 Weeks of data collection](https://reclab.idi.ntnu.no/dataset/three_month.tar.gz)
