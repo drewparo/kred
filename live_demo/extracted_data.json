@@ -1,0 +1,4 @@
+{
+    "user1": [{"item1": {"title": "title1"}}, {"item2": {"title": "title2"}}],
+    "user2": [{"item3": {"title": "title1"}}]
+}
